@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="grit absolute inset-0" aria-hidden />
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <ParallaxLayer
-            speed={0.18}
+            speed={0.24}
             className="absolute -left-24 top-0 h-[140%] w-[60%]"
             innerClassName="h-full w-full bg-gradient-to-br from-hero-accent/20 via-hero-accent/5 to-transparent blur-2xl"
           />
@@ -45,7 +45,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="relative overflow-hidden border border-hero-surface">
-            <ParallaxLayer speed={0.12}>
+            <ParallaxLayer speed={0.16}>
               <Image
                 src="/photo-1.jpg"
                 alt="#Hero artist photo"
@@ -68,7 +68,7 @@ export default function HomePage() {
           </p>
           <div className="space-y-4">
             <div className="overflow-hidden border border-hero-surface">
-              <ParallaxLayer speed={0.08}>
+              <ParallaxLayer speed={0.11}>
                 <Image
                   src="/photo-2.jpg"
                   alt="#Hero"
