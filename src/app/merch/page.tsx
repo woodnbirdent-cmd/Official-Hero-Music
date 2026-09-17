@@ -12,7 +12,7 @@ export default function MerchPage() {
       <p className="section-label mb-3">Gear</p>
       <h1 className="graffiti-heading mb-4">Merch</h1>
       <div className="card-surface mb-10">
-        <p className="mb-2 text-2xl font-black uppercase tracking-tight">Shop coming soon</p>
+        <p className="section-heading mb-2 text-2xl">Shop coming soon</p>
         <p className="mb-6 text-hero-light">
           Official #Hero merch is on the way. Drop your email and we&apos;ll hit you when
           the shop goes live. External shop link stub ready for later wiring.
