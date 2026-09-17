@@ -40,7 +40,7 @@ export default function MusicPage() {
       </div>
 
       <section className="mb-12">
-        <h2 className="mb-4 text-xl font-bold uppercase tracking-wide">Spotify</h2>
+        <h2 className="section-heading mb-4 text-xl tracking-wide">Spotify</h2>
         <iframe
           title="#Hero Spotify artist"
           src={`https://open.spotify.com/embed/artist/${SPOTIFY_ARTIST_ID}?utm_source=generator&theme=0`}
@@ -53,7 +53,7 @@ export default function MusicPage() {
       </section>
 
       <section>
-        <h2 className="mb-4 text-xl font-bold uppercase tracking-wide">Apple Music</h2>
+        <h2 className="section-heading mb-4 text-xl tracking-wide">Apple Music</h2>
         <p className="mb-4 text-sm text-hero-muted">
           Embed player — search / artist link opens full catalog on Apple Music.
         </p>

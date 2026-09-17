@@ -49,7 +49,7 @@ export default function CommunityPage() {
 
       <div className="max-w-2xl">
         <p className="section-label mb-3">Prayer</p>
-        <h2 className="mb-4 text-2xl font-black uppercase">Send a prayer request</h2>
+        <h2 className="section-heading mb-4 text-2xl">Send a prayer request</h2>
         <PrayerForm />
       </div>
     </div>
