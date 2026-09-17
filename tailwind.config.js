@@ -10,11 +10,12 @@ module.exports = {
       colors: {
         hero: {
           black: "#000000",
-          dark: "#111111",
-          surface: "#2D2D2D",
-          muted: "#777777",
+          dark: "#1a1c1f",
+          gray: "#494d54",
+          surface: "#494d54",
+          muted: "#9a9ea4",
           light: "#EEEEEE",
-          accent: "#C00000",
+          accent: "#aa9371",
         },
       },
       fontFamily: {

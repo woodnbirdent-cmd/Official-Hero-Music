@@ -6,6 +6,8 @@
   color-scheme: dark;
   --background: #000000;
   --foreground: #ffffff;
+  --hero-gray: #494d54;
+  --hero-gold: #aa9371;
 }
 
 html {
@@ -24,11 +26,11 @@ body {
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-none border-2 border-white bg-transparent px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+    @apply inline-flex items-center justify-center rounded-none border-2 border-hero-gray bg-transparent px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:border-hero-accent hover:text-hero-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black;
   }
 
   .btn-accent {
-    @apply inline-flex items-center justify-center rounded-none border-2 border-hero-accent bg-hero-accent px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-transparent hover:text-hero-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+    @apply inline-flex items-center justify-center rounded-none border-2 border-hero-accent bg-hero-accent px-6 py-3 text-sm font-bold uppercase tracking-wider text-black transition hover:bg-transparent hover:text-hero-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black;
   }
 
   .section-label {
@@ -36,11 +38,11 @@ body {
   }
 
   .card-surface {
-    @apply border border-hero-surface bg-hero-dark p-6;
+    @apply border border-hero-gray bg-hero-dark p-6;
   }
 
   .input-field {
-    @apply w-full border border-hero-surface bg-black px-4 py-3 text-white placeholder:text-hero-muted focus:border-white focus:outline-none;
+    @apply w-full border border-hero-gray bg-black px-4 py-3 text-white placeholder:text-hero-muted focus:border-hero-accent focus:outline-none;
   }
 
   .graffiti-heading {
