@@ -1,60 +1,61 @@
 import Image from "next/image";
 import Link from "next/link";
+import HeroVideoBackground from "@/components/HeroVideoBackground";
 import SocialIcons from "@/components/SocialIcons";
 import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
-import { BIO, SITE, SPOTIFY_ARTIST_ID, YOUTUBE_VIDEOS } from "@/lib/constants";
+import { BIO, HERO_YOUTUBE_ID, SITE, SPOTIFY_ARTIST_ID, YOUTUBE_VIDEOS } from "@/lib/constants";
 
 export default function HomePage() {
   return (
     <ParallaxRoot>
-      <section className="relative overflow-hidden border-b border-hero-surface">
+      <section className="relative min-h-[min(92vh,940px)] overflow-hidden border-b border-hero-surface">
+        <Image
+          src="/photo-1.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[center_20%] grayscale"
+        />
+        <HeroVideoBackground videoId={HERO_YOUTUBE_ID} />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-black"
+          aria-hidden
+        />
         <div className="grit absolute inset-0" aria-hidden />
         <div className="pointer-events-none absolute inset-0" aria-hidden>
           <ParallaxLayer
-            speed={0.24}
-            className="absolute -left-24 top-0 h-[140%] w-[60%]"
-            innerClassName="h-full w-full bg-gradient-to-br from-hero-accent/20 via-hero-accent/5 to-transparent blur-2xl"
+            speed={0.18}
+            className="absolute -left-24 top-0 h-[140%] w-[55%]"
+            innerClassName="h-full w-full bg-gradient-to-br from-hero-accent/25 via-hero-accent/5 to-transparent blur-2xl"
           />
         </div>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
-          <div>
-            <p className="section-label mb-4">Official fan hub · Yahfamilia</p>
-            <Image
-              src="/logo-hero.png"
-              alt="#Hero"
-              width={420}
-              height={160}
-              className="mb-6 h-auto w-full max-w-md"
-              priority
-            />
-            <h1 className="graffiti-heading mb-4">{SITE.tagline}</h1>
-            <p className="mb-8 max-w-lg text-hero-light">
-              Christian hip-hop from {SITE.location}. Real testimony. Unyielding faith.
-              No compromise.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/music" className="btn-primary">
-                Latest drops
-              </Link>
-              <Link href="/join" className="btn-ghost">
-                Join the list
-              </Link>
-              <Link href="/support" className="btn-accent">
-                Support
-              </Link>
-            </div>
-          </div>
-          <div className="relative overflow-hidden border border-hero-surface">
-            <ParallaxLayer speed={0.16}>
-              <Image
-                src="/photo-1.jpg"
-                alt="#Hero artist photo"
-                width={800}
-                height={1000}
-                className="h-auto w-full origin-center scale-125 object-cover grayscale"
-                priority
-              />
-            </ParallaxLayer>
+
+        <div className="relative z-10 mx-auto flex min-h-[min(92vh,940px)] max-w-6xl flex-col justify-end px-4 py-16 md:justify-center md:py-24">
+          <p className="section-label mb-4">Official fan hub · Yahfamilia</p>
+          <Image
+            src="/logo-hero.png"
+            alt="#Hero"
+            width={420}
+            height={160}
+            className="mb-6 h-auto w-full max-w-md"
+            priority
+          />
+          <h1 className="graffiti-heading mb-4 max-w-xl">{SITE.tagline}</h1>
+          <p className="mb-8 max-w-lg text-hero-light">
+            Christian hip-hop from {SITE.location}. Real testimony. Unyielding faith.
+            No compromise.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/music" className="btn-primary">
+              Latest drops
+            </Link>
+            <Link href="/tour" className="btn-accent">
+              Tour dates
+            </Link>
+            <Link href="/join" className="btn-ghost">
+              Join the list
+            </Link>
           </div>
         </div>
       </section>
