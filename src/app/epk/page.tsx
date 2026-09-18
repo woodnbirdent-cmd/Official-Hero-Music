@@ -167,17 +167,20 @@ export default function EpkPage() {
         <section className="mb-16">
           <p className="section-label mb-3">Connect</p>
           <h2 className="section-heading mb-6 text-3xl">Socials</h2>
-          <SocialIcons className="mb-4" />
-          <ul className="mt-4 grid gap-2 text-sm text-hero-muted sm:grid-cols-2">
+          <SocialIcons className="mb-6" />
+          <ul className="max-w-xl space-y-2 text-sm text-hero-muted">
             {SOCIALS.map((social) => (
-              <li key={social.name}>
+              <li key={social.name} className="break-all">
+                <span className="mr-2 font-bold uppercase tracking-wider text-hero-light">
+                  {social.label}:
+                </span>
                 <a
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-hero-accent hover:underline"
                 >
-                  {social.label}
+                  {social.href}
                 </a>
               </li>
             ))}
