@@ -24,14 +24,14 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition ${
+                className={`px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider transition ${
                   active
                     ? "bg-white text-black"
                     : "text-hero-light hover:bg-hero-surface hover:text-white"
@@ -45,7 +45,7 @@ export default function Header() {
 
         <button
           type="button"
-          className="inline-flex items-center justify-center border border-white px-3 py-2 text-xs font-bold uppercase tracking-wider lg:hidden"
+          className="inline-flex items-center justify-center border border-white px-3 py-2 text-xs font-bold uppercase tracking-wider xl:hidden"
           aria-expanded={open}
           aria-controls="mobile-nav"
           onClick={() => setOpen((v) => !v)}
@@ -57,7 +57,7 @@ export default function Header() {
       {open && (
         <nav
           id="mobile-nav"
-          className="border-t border-hero-surface bg-black lg:hidden"
+          className="border-t border-hero-surface bg-black xl:hidden"
           aria-label="Mobile"
         >
           <ul className="mx-auto flex max-w-6xl flex-col px-4 py-2">

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Bebas_Neue } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ListenBar from "@/components/ListenBar";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
 
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <ListenBar />
       </body>
     </html>
   );

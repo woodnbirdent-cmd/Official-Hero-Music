@@ -22,6 +22,10 @@ html {
   [data-parallax-layer] {
     transform: none !important;
   }
+
+  .hero-video-bg {
+    display: none !important;
+  }
 }
 
 body {
@@ -62,6 +66,30 @@ body {
   .section-heading {
     @apply font-black uppercase tracking-tight text-hero-accent;
   }
+}
+
+.hero-video-bg {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.hero-video-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 177.78vh;
+  height: 56.25vw;
+  min-width: 100%;
+  min-height: 100%;
+  transform: translate(-50%, -50%);
+  border: 0;
+}
+
+.bandsintown-shell .bit-widget-container,
+.bandsintown-shell iframe {
+  max-width: 100%;
 }
 
 /* Subtle noise / grit overlay for graffiti aesthetic */
