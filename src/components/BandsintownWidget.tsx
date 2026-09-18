@@ -1,19 +1,25 @@
 "use client";
 
-import Script from "next/script";
+import { useEffect } from "react";
 import { BANDSINTOWN } from "@/lib/constants";
 
+const WIDGET_SRC = "https://widgetv3.bandsintown.com/main.min.js";
+
 export default function BandsintownWidget() {
+  useEffect(() => {
+    if (document.querySelector(`script[src="${WIDGET_SRC}"]`)) return;
+
+    const script = document.createElement("script");
+    script.src = WIDGET_SRC;
+    script.async = true;
+    script.setAttribute("charset", "utf-8");
+    document.body.appendChild(script);
+  }, []);
+
   return (
-    <div className="bandsintown-shell border border-hero-surface bg-black p-4 md:p-6">
-      <Script
-        src="https://widgetv3.bandsintown.com/main.min.js"
-        strategy="lazyOnload"
-        charSet="utf-8"
-      />
+    <div className="bandsintown-shell min-h-[160px] border border-hero-surface bg-black p-4 md:p-6">
       <a
-        className="bit-widget-initializer"
-        href={BANDSINTOWN.pageUrl}
+        className="bit-widget-initializer text-sm text-hero-accent underline-offset-4 hover:underline"
         data-artist-name={BANDSINTOWN.widgetArtist}
         data-display-local-dates="false"
         data-display-past-dates="false"

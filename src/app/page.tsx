@@ -19,7 +19,11 @@ export default function HomePage() {
         />
         <HeroVideoBackground videoId={HERO_YOUTUBE_ID} />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-black"
+          className="pointer-events-none absolute inset-0 bg-black/50"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black"
           aria-hidden
         />
         <div className="grit absolute inset-0" aria-hidden />
