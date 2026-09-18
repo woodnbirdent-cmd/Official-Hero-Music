@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import SocialIcons from "@/components/SocialIcons";
 import StreamingLinks from "@/components/StreamingLinks";
-import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
 import {
   BIO,
   FYC,
@@ -20,8 +19,7 @@ export const metadata: Metadata = {
 
 export default function EpkPage() {
   return (
-    <ParallaxRoot>
-      <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-12">
         <p className="section-label mb-3">Press kit</p>
         <h1 className="graffiti-heading mb-4">EPK</h1>
         <p className="mb-10 max-w-2xl text-hero-light">
@@ -31,16 +29,14 @@ export default function EpkPage() {
 
         <section className="mb-16 grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="overflow-hidden border border-hero-surface">
-            <ParallaxLayer speed={0.08}>
               <Image
                 src="/photo-1.jpg"
                 alt="#Hero press photo"
                 width={1200}
                 height={1500}
-                className="h-full w-full origin-center scale-110 object-cover grayscale"
+                className="h-full w-full object-cover grayscale"
                 priority
               />
-            </ParallaxLayer>
           </div>
           <div className="border border-hero-surface bg-hero-dark p-6 md:p-8">
             <p className="section-label mb-4">One-sheet</p>
@@ -206,7 +202,6 @@ export default function EpkPage() {
             Booking form
           </Link>
         </section>
-      </div>
-    </ParallaxRoot>
+    </div>
   );
 }
