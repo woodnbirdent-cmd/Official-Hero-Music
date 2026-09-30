@@ -7,15 +7,40 @@ import styles from "./BibleSequence.module.css";
 
 /**
  * Sticky scroll-scrubbed Bible.
- * 0.00–0.08 hold: closed book, logo + photo-1 centered in front
- * 0.06–0.42 cover opens while the camera eases from a 3/4 angle toward the spread
- * 0.14–0.50 a blank leaf, then the photo leaf, turn on a lag so it isn't one flip
- * 0.48–0.70 photo-2 glides onto the right page
- * 0.66–0.86 gold tagline settles on that page
- * 0.86–1.00 hold, then the section releases into the rest of the page
+ * 0.00–0.10 hold: closed leather Bible, three-quarter, gilt block and ribbons
+ * 0.08–0.50 cover and a leaf open onto scripture
+ * 0.32–0.82 camera drops to the low, edge-on glowing spread
+ * 0.82–1.00 hold, then the section releases
  *
- * prefers-reduced-motion: CSS pins the open still and this loop never starts.
+ * The #Hero logo and tagline stay above the book. Pages are scripture only.
+ * prefers-reduced-motion: CSS shows the open spread and this loop never starts.
+ *
+ * Page copy is King James Version (public domain), used as the printed page,
+ * not as new copy about the artist.
  */
+
+const VERSES = [
+  "The LORD is my shepherd; I shall not want.",
+  "He maketh me to lie down in green pastures: he leadeth me beside the still waters.",
+  "He restoreth my soul: he leadeth me in the paths of righteousness for his name's sake.",
+  "Yea, though I walk through the valley of the shadow of death, I will fear no evil: for thou art with me; thy rod and thy staff they comfort me.",
+  "Thou preparest a table before me in the presence of mine enemies: thou anointest my head with oil; my cup runneth over.",
+  "Surely goodness and mercy shall follow me all the days of my life: and I will dwell in the house of the LORD for ever.",
+  "I will lift up mine eyes unto the hills, from whence cometh my help.",
+  "My help cometh from the LORD, which made heaven and earth.",
+  "He will not suffer thy foot to be moved: he that keepeth thee will not slumber.",
+  "Behold, he that keepeth Israel shall neither slumber nor sleep.",
+  "The LORD is thy keeper: the LORD is thy shade upon thy right hand.",
+  "The sun shall not smite thee by day, nor the moon by night.",
+  "The LORD shall preserve thee from all evil: he shall preserve thy soul.",
+  "The LORD shall preserve thy going out and thy coming in from this time forth, and even for evermore.",
+  "In the beginning was the Word, and the Word was with God, and the Word was God.",
+  "The same was in the beginning with God.",
+  "All things were made by him; and without him was not any thing made that was made.",
+  "In him was life; and the life was the light of men.",
+  "And the light shineth in darkness; and the darkness comprehended it not.",
+  "Fear thou not; for I am with thee: be not dismayed; for I am thy God: I will strengthen thee; yea, I will help thee; yea, I will uphold thee with the right hand of my righteousness.",
+] as const;
 
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
@@ -27,6 +52,20 @@ function segment(progress: number, start: number, end: number) {
 
 function ease(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function ScripturePage({ offset }: { offset: number }) {
+  const items = Array.from({ length: 22 }, (_, index) => VERSES[(offset + index) % VERSES.length]);
+  return (
+    <div className={styles.scripture}>
+      {items.map((verse, index) => (
+        <p key={`${offset}-${index}`}>
+          <sup>{(index % 10) + 1}</sup>
+          {verse}
+        </p>
+      ))}
+    </div>
+  );
 }
 
 export default function BibleSequence() {
@@ -45,23 +84,17 @@ export default function BibleSequence() {
     let target = 0;
 
     const apply = (progress: number) => {
-      const open = ease(segment(progress, 0.06, 0.42));
-      const blank = ease(segment(progress, 0.14, 0.46));
-      const leaf = ease(segment(progress, 0.2, 0.52));
-      const arrive = ease(segment(progress, 0.48, 0.7));
-      const speak = ease(segment(progress, 0.66, 0.86));
-      const front = 1 - ease(segment(progress, 0.18, 0.46));
-      const kicker = 1 - ease(segment(progress, 0.08, 0.28));
+      const open = ease(segment(progress, 0.08, 0.5));
+      const leaf = ease(segment(progress, 0.16, 0.58));
+      const low = ease(segment(progress, 0.34, 0.82));
       const hint = 1 - ease(segment(progress, 0.04, 0.16));
+      const kicker = 1 - ease(segment(progress, 0.12, 0.34));
 
       scene.style.setProperty("--open", open.toFixed(4));
-      scene.style.setProperty("--blank", blank.toFixed(4));
       scene.style.setProperty("--leaf", leaf.toFixed(4));
-      scene.style.setProperty("--arrive", arrive.toFixed(4));
-      scene.style.setProperty("--speak", speak.toFixed(4));
-      scene.style.setProperty("--front", front.toFixed(4));
-      scene.style.setProperty("--kicker", kicker.toFixed(4));
+      scene.style.setProperty("--low", low.toFixed(4));
       scene.style.setProperty("--hint", hint.toFixed(4));
+      scene.style.setProperty("--kicker", kicker.toFixed(4));
       scene.style.setProperty("--p", progress.toFixed(4));
     };
 
@@ -89,15 +122,6 @@ export default function BibleSequence() {
       }
     };
 
-    const kick = () => {
-      if (motion.matches) return;
-      measure();
-      if (!running) {
-        running = true;
-        frame = window.requestAnimationFrame(tick);
-      }
-    };
-
     const stop = () => {
       running = false;
       if (frame) window.cancelAnimationFrame(frame);
@@ -105,26 +129,9 @@ export default function BibleSequence() {
     };
 
     const clearInline = () => {
-      [
-        "--open",
-        "--blank",
-        "--leaf",
-        "--arrive",
-        "--speak",
-        "--front",
-        "--kicker",
-        "--hint",
-        "--p",
-      ].forEach((name) => scene.style.removeProperty(name));
-    };
-
-    const onMotion = () => {
-      if (motion.matches) {
-        stop();
-        clearInline();
-        return;
-      }
-      kick();
+      ["--open", "--leaf", "--low", "--hint", "--kicker", "--p"].forEach((name) => {
+        scene.style.removeProperty(name);
+      });
     };
 
     const onScroll = () => {
@@ -136,7 +143,16 @@ export default function BibleSequence() {
       }
     };
 
-    if (!motion.matches) kick();
+    const onMotion = () => {
+      if (motion.matches) {
+        stop();
+        clearInline();
+        return;
+      }
+      onScroll();
+    };
+
+    if (!motion.matches) onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     motion.addEventListener("change", onMotion);
@@ -151,19 +167,27 @@ export default function BibleSequence() {
   }, []);
 
   return (
-    <section
-      ref={trackRef}
-      className={styles.track}
-      aria-labelledby="bible-title"
-    >
+    <section ref={trackRef} className={styles.track} aria-labelledby="bible-title">
       <div className={styles.sticky}>
         <div ref={sceneRef} className={styles.scene}>
           <a className={styles.skip} href="#home-continue">
             Skip introduction
           </a>
-          <div className={styles.glow} aria-hidden />
-          <div className={styles.halo} aria-hidden />
+
           <p className={styles.kicker}>Official fan hub · Yahfamilia</p>
+          <div className={styles.lockup}>
+            <Image
+              src="/logo-hero.png"
+              alt="#Hero"
+              width={352}
+              height={318}
+              priority
+              className={styles.logo}
+            />
+            <h1 id="bible-title" className={styles.tagline}>
+              {SITE.tagline}
+            </h1>
+          </div>
 
           <div className={styles.stage}>
             <div className={styles.floor} aria-hidden />
@@ -171,94 +195,51 @@ export default function BibleSequence() {
               <div className={styles.book} aria-hidden>
                 <div className={styles.backBoard} />
                 <div className={styles.spine} />
-                <div className={styles.pages}>
-                  <div className={styles.pageFace}>
-                    <div className={styles.rightPhoto}>
-                      <Image
-                        src="/photo-2.jpg"
-                        alt=""
-                        fill
-                        sizes="240px"
-                        className={styles.photo}
-                      />
-                    </div>
-                    <div className={styles.plate}>
-                      <span className={styles.rule} />
-                      <p className={styles.line}>{SITE.tagline}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.foreEdge} />
-                <div className={styles.headEdge} />
 
-                <div className={styles.blank}>
-                  <div className={`${styles.face} ${styles.paper}`}>
-                    <span className={`${styles.shade} ${styles.shadeBlank}`} />
+                <div className={styles.pageBlock}>
+                  <div className={styles.pageFace}>
+                    <ScripturePage offset={7} />
                   </div>
-                  <div className={`${styles.face} ${styles.faceBack} ${styles.paperBack}`} />
+                  <div className={styles.foreEdge} />
+                  <div className={styles.headEdge} />
+                  <div className={styles.tailEdge} />
                 </div>
 
                 <div className={styles.leaf}>
-                  <div className={`${styles.face} ${styles.paper}`}>
+                  <div className={`${styles.face} ${styles.paperLines}`}>
                     <span className={`${styles.shade} ${styles.shadeLeaf}`} />
                   </div>
-                  <div className={`${styles.face} ${styles.faceBack} ${styles.paperBack}`}>
-                    <div className={styles.leafPhoto}>
-                      <Image
-                        src="/photo-1.jpg"
-                        alt=""
-                        fill
-                        sizes="240px"
-                        className={styles.photo}
-                      />
-                    </div>
+                  <div className={`${styles.face} ${styles.faceBack} ${styles.paper}`}>
+                    <ScripturePage offset={0} />
                   </div>
+                  <div className={styles.leafEdge} />
+                  <div className={styles.leafHead} />
+                  <div className={styles.leafTail} />
                 </div>
 
                 <div className={styles.cover}>
-                  <div className={`${styles.face} ${styles.coverFront}`}>
-                    <Image
-                      src="/logo-mark.png"
-                      alt=""
-                      width={180}
-                      height={180}
-                      className={styles.mark}
-                    />
+                  <div className={`${styles.face} ${styles.leather}`}>
+                    <div className={styles.frame} />
+                    <div className={styles.stamp}>
+                      <span className={styles.stampRule} />
+                      <p>Holy Bible</p>
+                      <span className={styles.stampRule} />
+                    </div>
                     <span className={styles.sheen} />
                     <span className={`${styles.shade} ${styles.shadeCover}`} />
                   </div>
-                  <div className={`${styles.face} ${styles.faceBack} ${styles.coverIn}`}>
-                    <span className={`${styles.shade} ${styles.shadeCover}`} />
-                  </div>
+                  <div className={`${styles.face} ${styles.faceBack} ${styles.leatherIn}`} />
                 </div>
-              </div>
-            </div>
 
-            <div className={styles.poster}>
-              <Image
-                src="/logo-hero.png"
-                alt="#Hero"
-                width={352}
-                height={318}
-                priority
-                className={styles.logo}
-              />
-              <div className={styles.frontPhoto}>
-                <Image
-                  src="/photo-1.jpg"
-                  alt="#Hero"
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 34vw, 180px"
-                  className={styles.photo}
-                />
+                <div className={styles.closedRibbons}>
+                  <span className={styles.ribbonA} />
+                  <span className={styles.ribbonB} />
+                </div>
+                <span className={styles.gutterRibbon} />
               </div>
             </div>
           </div>
 
-          <h1 id="bible-title" className="sr-only">
-            {SITE.tagline}
-          </h1>
           <div className={styles.vignette} aria-hidden />
           <p className={styles.hint} aria-hidden>
             Scroll
