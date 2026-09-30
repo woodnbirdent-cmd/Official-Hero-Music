@@ -1,8 +1,6 @@
 /*
-  Scroll-scrubbed leather Bible. Progress is unitless custom properties.
-  --open / --leaf swing the cover and the left page.
-  --low drops the camera from the closed three-quarter view to the
-  edge-on gilt spread.
+  Scroll track for the three.js Bible. The mesh lives on the canvas.
+  --hint / --kicker / --p drive the lockup chrome only.
 */
 
 .track {
@@ -20,13 +18,9 @@
 }
 
 .scene {
-  --open: 0;
-  --leaf: 0;
-  --low: 0;
   --hint: 1;
   --kicker: 1;
   --p: 0;
-  --gold: #aa9371;
 
   position: relative;
   display: flex;
@@ -82,422 +76,15 @@
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: 0;
-  perspective: 1100px;
-  perspective-origin: 50% 58%;
+  min-height: 240px;
 }
 
-.floor {
-  position: absolute;
-  left: 50%;
-  bottom: 10%;
-  width: min(78vw, 640px);
-  height: 70px;
-  transform: translateX(-50%) scaleX(calc(0.72 + var(--low) * 0.45));
-  background: radial-gradient(
-    ellipse,
-    rgba(170, 147, 113, calc(0.08 + var(--low) * 0.42)) 0%,
-    rgba(170, 147, 113, 0.05) 36%,
-    transparent 70%
-  );
-  filter: blur(10px);
-  pointer-events: none;
-}
-
-.rig {
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  transform:
-    translate(-50%, -50%)
-    rotateX(calc(14deg + var(--low) * 32deg))
-    rotateY(calc(-34deg + var(--low) * 34deg))
-    scale(calc(0.94 + var(--open) * 0.02));
-  will-change: transform;
-}
-
-.book {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: min(42vw, 210px);
-  height: calc(min(42vw, 210px) * 1.32);
-  transform-style: preserve-3d;
-  transform: translate(-50%, -46%) translateX(calc(var(--open) * 48%));
-}
-
-.backBoard,
-.spine,
-.pageBlock,
-.leaf,
-.cover,
-.foreEdge,
-.headEdge,
-.tailEdge,
-.leafEdge,
-.leafHead,
-.leafTail {
-  position: absolute;
-  transform-style: preserve-3d;
-}
-
-.backBoard {
-  inset: 0;
-  background:
-    radial-gradient(80% 60% at 70% 80%, rgba(255, 255, 255, 0.04), transparent 50%),
-    #100e0c;
-  box-shadow: inset 0 0 0 1px rgba(170, 147, 113, 0.35);
-  transform: translateZ(-68px);
-}
-
-.spine {
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 68px;
-  transform-origin: left center;
-  transform: rotateY(-90deg);
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.45), transparent 30%, rgba(255, 255, 255, 0.08) 48%, rgba(0, 0, 0, 0.55)),
-    repeating-linear-gradient(
-      to bottom,
-      #1a1612 0 34px,
-      #aa9371 34px 36px,
-      #241c16 36px 44px,
-      #0c0b0a 44px 92px
-    );
-}
-
-.pageBlock {
-  left: 8px;
-  right: 9px;
-  top: 10px;
-  bottom: 12px;
-  background: #f3efe4;
-  transform: translateZ(1px);
-}
-
-.pageFace,
-.face {
+.canvas {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.paper {
-  background:
-    linear-gradient(270deg, rgba(0, 0, 0, 0.16), transparent 12%),
-    #f7f3ea;
-}
-
-.pageFace {
-  background:
-    linear-gradient(90deg, rgba(40, 28, 12, 0.22), transparent 10%),
-    #f7f3ea;
-}
-
-.scripture {
-  height: 100%;
-  padding: 7% 6% 6%;
-  column-count: 2;
-  column-gap: 0.55rem;
-  color: #1c1c1c;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 7.2px;
-  line-height: 1.38;
-  text-align: justify;
-}
-
-.scripture p {
-  margin: 0 0 0.38em;
-}
-
-.scripture sup {
-  margin-right: 0.18em;
-  color: #4a4034;
-  font-size: 0.72em;
-}
-
-.foreEdge,
-.headEdge,
-.tailEdge,
-.leafEdge,
-.leafHead,
-.leafTail {
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 246, 220, 0.95) 0%,
-      rgba(170, 147, 113, 0.15) 22%,
-      transparent 46%
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      #f8f1df 0 1px,
-      #c6b48a 1px 2px,
-      #aa9371 2px 3px,
-      #5c4a30 3px 4px
-    );
-  box-shadow:
-    0 0 calc(8px + var(--low) * 26px) rgba(170, 147, 113, calc(0.25 + var(--low) * 0.7));
-}
-
-.foreEdge {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 68px;
-  transform-origin: right center;
-  transform: rotateY(90deg);
-}
-
-.foreEdge::after {
-  content: "";
-  position: absolute;
-  inset: 6% 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0 16px,
-    rgba(18, 10, 8, 0.9) 16px 26px,
-    transparent 26px 42px
-  );
-  pointer-events: none;
-}
-
-.headEdge,
-.leafHead {
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 22px;
-  transform-origin: center top;
-  transform: rotateX(90deg);
-  opacity: calc(0.35 + var(--low) * 0.65);
-}
-
-.tailEdge,
-.leafTail {
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 22px;
-  transform-origin: center bottom;
-  transform: rotateX(-90deg);
-  opacity: calc(0.35 + var(--low) * 0.65);
-}
-
-.tailEdge::before,
-.foreEdge::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 42%;
-  background: linear-gradient(rgba(255, 246, 214, 0.95), rgba(170, 147, 113, 0));
-  opacity: calc(0.35 + var(--low) * 0.65);
-  pointer-events: none;
-}
-
-.leaf,
-.cover {
-  transform-origin: left center;
-  will-change: transform;
-}
-
-.leaf {
-  top: 12px;
-  bottom: 14px;
-  left: 6px;
-  width: calc(100% - 14px);
-  transform: rotateY(calc(var(--leaf) * -152deg - var(--low) * 26deg)) translateZ(10px);
-}
-
-.leafEdge {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 36px;
-  transform-origin: right center;
-  transform: rotateY(90deg);
-}
-
-.cover {
-  inset: 0;
-  transform: rotateY(calc(var(--open) * -160deg - var(--low) * 18deg)) translateZ(18px);
-}
-
-.faceBack {
-  transform: rotateY(180deg) translateZ(1px);
-}
-
-.leather,
-.leatherIn {
-  background:
-    radial-gradient(90% 70% at 50% 42%, rgba(88, 74, 58, 0.55), transparent 58%),
-    radial-gradient(80% 50% at 18% 12%, rgba(255, 255, 255, 0.07), transparent 42%),
-    radial-gradient(70% 60% at 90% 100%, rgba(0, 0, 0, 0.45), transparent 50%),
-    linear-gradient(165deg, #3a322b 0%, #1a1613 38%, #0d0c0b 100%);
-}
-
-.leather::before,
-.leatherIn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.28;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-
-.leatherIn {
-  box-shadow:
-    inset 0 0 0 2px rgba(170, 147, 113, 0.45),
-    inset 0 0 0 10px #120f0c;
-}
-
-.frame {
-  position: absolute;
-  inset: 8%;
-  border: 1.5px solid #aa9371;
-  box-shadow:
-    0 0 0 4px rgba(12, 10, 8, 0.15),
-    0 0 0 5.5px rgba(170, 147, 113, 0.7);
-  pointer-events: none;
-}
-
-.stamp {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 72%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-.stamp p {
-  margin: 0.35rem 0;
-  color: #aa9371;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(0.62rem, 1.7vw, 0.84rem);
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-indent: 0.28em;
-  text-transform: uppercase;
-  text-shadow:
-    0 1px 0 rgba(255, 236, 200, 0.35),
-    0 -1px 0 rgba(0, 0, 0, 0.75);
-}
-
-.stampRule {
   display: block;
-  height: 1px;
-  margin: 0 auto;
-  width: 72%;
-  background: linear-gradient(90deg, transparent, #aa9371, transparent);
-}
-
-.sheen {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.07) 46%,
-    transparent 62%
-  );
-  transform: translateX(calc(-20% + var(--open) * 30%));
-  pointer-events: none;
-}
-
-.shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.45),
-    rgba(0, 0, 0, 0.05) 30%,
-    rgba(255, 255, 255, 0.12) 52%,
-    rgba(0, 0, 0, 0.25)
-  );
-  opacity: 0.18;
-  pointer-events: none;
-}
-
-.paperLines {
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.14), transparent 9%),
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 8px,
-      rgba(28, 24, 18, 0.28) 8px 8.7px
-    ),
-    #f4efe4;
-}
-
-.closedRibbons {
-  position: absolute;
-  left: 42%;
-  bottom: 8px;
-  width: 70px;
-  height: 86px;
-  transform-style: preserve-3d;
-  transform: translateZ(6px);
-  opacity: calc(1 - var(--open));
-  pointer-events: none;
-}
-
-.ribbonA,
-.ribbonB,
-.gutterRibbon {
-  position: absolute;
-  width: 11px;
-  background: linear-gradient(
-    to bottom,
-    #4a181c 0%,
-    #2a0e12 68%,
-    #aa9371 68%,
-    #f0e2c2 84%,
-    #aa9371 100%
-  );
-  box-shadow: 1px 2px 0 rgba(0, 0, 0, 0.35);
-}
-
-.ribbonA {
-  left: 8px;
-  top: 0;
-  height: 74px;
-  transform: rotate(10deg);
-}
-
-.ribbonB {
-  left: 24px;
-  top: 4px;
-  height: 88px;
-  transform: rotate(22deg);
-}
-
-.gutterRibbon {
-  left: 0;
-  top: 58%;
-  width: 10px;
-  height: 120px;
-  transform: translateZ(14px) rotate(8deg);
-  transform-origin: top center;
-  opacity: var(--leaf);
-}
-
-.vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 58%, transparent 36%, #000000 78%);
-  pointer-events: none;
+  width: 100%;
+  height: 100%;
 }
 
 .hint {
@@ -517,6 +104,7 @@
   letter-spacing: 0.32em;
   text-transform: uppercase;
   opacity: var(--hint);
+  pointer-events: none;
 }
 
 .hintBar {
@@ -533,6 +121,7 @@
   z-index: 5;
   height: 2px;
   background: #494d54;
+  pointer-events: none;
 }
 
 .meter > span {
@@ -585,25 +174,6 @@
     max-width: none;
     font-size: 2.35rem;
   }
-
-  .stage {
-    perspective: 1700px;
-  }
-
-  .rig {
-    top: 40%;
-    transform:
-      translate(-50%, -48%)
-      rotateX(calc(16deg + var(--low) * 52deg))
-      rotateY(calc(-42deg + var(--low) * 42deg))
-      scale(calc(1 - var(--low) * 0.04));
-  }
-
-  .book {
-    width: 320px;
-    height: 420px;
-    transform: translate(-50%, -44%) translateX(calc(var(--open) * 50%));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -620,12 +190,13 @@
 
   .scene {
     min-height: calc(100svh - var(--header-offset));
-    --open: 1;
-    --leaf: 1;
-    --low: 1;
     --hint: 0;
     --kicker: 1;
     --p: 1;
+  }
+
+  .stage {
+    min-height: 58vh;
   }
 
   .hint,
@@ -652,15 +223,5 @@
     transform: scaleY(1);
     transform-origin: top;
     opacity: 1;
-  }
-}
-
-@supports (opacity: sin(90deg)) {
-  .shadeCover {
-    opacity: calc(sin(calc((var(--open) * 158 + var(--low) * 18) * 1deg)) * 0.72);
-  }
-
-  .shadeLeaf {
-    opacity: calc(sin(calc((var(--leaf) * 150 + var(--low) * 22) * 1deg)) * 0.62);
   }
 }
