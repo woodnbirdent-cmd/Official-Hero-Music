@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import BibleSequence from "@/components/BibleSequence";
 import HeroVideoBackground from "@/components/HeroVideoBackground";
 import SocialIcons from "@/components/SocialIcons";
 import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
@@ -8,12 +9,16 @@ import { BIO, HERO_YOUTUBE_ID, SITE, SPOTIFY_ARTIST_ID, YOUTUBE_VIDEOS } from "@
 export default function HomePage() {
   return (
     <ParallaxRoot>
-      <section className="relative min-h-[min(92vh,940px)] overflow-hidden border-b border-hero-surface">
+      <BibleSequence />
+
+      <section
+        id="home-continue"
+        className="relative min-h-[min(92vh,940px)] scroll-mt-16 overflow-hidden border-b border-hero-surface"
+      >
         <Image
           src="/photo-1.jpg"
           alt=""
           fill
-          priority
           sizes="100vw"
           className="object-cover object-[center_20%] grayscale"
         />
@@ -43,9 +48,8 @@ export default function HomePage() {
             width={420}
             height={160}
             className="mb-6 h-auto w-full max-w-md"
-            priority
           />
-          <h1 className="graffiti-heading mb-4 max-w-xl">{SITE.tagline}</h1>
+          <p className="graffiti-heading mb-4 max-w-xl">{SITE.tagline}</p>
           <p className="mb-8 max-w-lg text-hero-light">
             Christian hip-hop from {SITE.location}. Real testimony. Unyielding faith.
             No compromise.
