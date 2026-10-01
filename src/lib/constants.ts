@@ -7,7 +7,7 @@ export const SITE = {
   location: "Jefferson City, Missouri",
   label: "Yahfamilia / YahFamilia Music",
   genre: "Christian hip-hop (CHH)",
-  tagline: "I ain't who I used to be.",
+  tagline: "Thank God I am who I am and not who I was",
   description:
     "Official #Hero Music — Christian hip-hop from Jefferson City, MO. Raw redemption testimony. Yahfamilia.",
 } as const;
@@ -42,7 +42,7 @@ export const SOCIALS = [
 export const SPOTIFY_ARTIST_ID = "2RBbpq5Ew0Dys73bn7mdTN";
 export const APPLE_MUSIC_ARTIST_ID = "1780403510";
 export const YOUTUBE_CHANNEL_ID = "UCWs5_tZF0omLCDNNpdyEPBg";
-export const HERO_YOUTUBE_ID = "1KevZBcEefI";
+export const HERO_YOUTUBE_ID = "YzbdSLIpsmQ";
 export const YOUTUBE_VIDEOS = [
   { id: "1KevZBcEefI", title: "#Hero — Official Video" },
   { id: "YzbdSLIpsmQ", title: "#Hero — Official Video 2" },
