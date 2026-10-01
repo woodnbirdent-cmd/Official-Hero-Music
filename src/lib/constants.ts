@@ -7,7 +7,7 @@ export const SITE = {
   location: "Jefferson City, Missouri",
   label: "Yahfamilia / YahFamilia Music",
   genre: "Christian hip-hop (CHH)",
-  tagline: "I ain't who I used to be.",
+  tagline: "Thank God I am who I am and not who I was",
   description:
     "Official #Hero Music — Christian hip-hop from Jefferson City, MO. Raw redemption testimony. Yahfamilia.",
 } as const;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PrayerForm from "@/components/PrayerForm";
+import { SITE } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Community",
@@ -28,7 +29,7 @@ export default function CommunityPage() {
         </article>
         <article className="card-surface">
           <p className="section-label mb-3">Testimony</p>
-          <h2 className="mb-3 text-xl font-bold uppercase">I ain&apos;t who I used to be</h2>
+          <h2 className="mb-3 text-xl font-bold uppercase">{SITE.tagline}</h2>
           <p className="text-sm text-hero-light">
             Delivered from addiction, prison, and homelessness. Husband. Father of two.
             Still refusing to compromise.
