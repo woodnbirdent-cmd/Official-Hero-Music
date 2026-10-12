@@ -51,11 +51,6 @@ function parseItems(body: unknown): CheckoutItem[] | { error: string } {
 }
 
 export async function POST(request: Request) {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret) {
-    return NextResponse.json({ error: "Checkout is not configured." }, { status: 503 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -66,6 +61,11 @@ export async function POST(request: Request) {
   const items = parseItems(body);
   if ("error" in items) {
     return NextResponse.json({ error: items.error }, { status: 400 });
+  }
+
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    return NextResponse.json({ error: "Checkout is not configured." }, { status: 503 });
   }
 
   const origin = new URL(request.url).origin;
