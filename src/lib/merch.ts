@@ -1,9 +1,3 @@
-/**
- * Flat US shipping charged once per merch order, in cents.
- * TODO: Replace this flat rate with Shippo live rates.
- */
-export const SHIPPING_FLAT_CENTS = 600;
-
 export const MERCH_PRICE_CENTS = 2500;
 export const MAX_QUANTITY = 10;
 export const CART_STORAGE_KEY = "hero-merch-cart";
