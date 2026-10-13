@@ -8,11 +8,10 @@ type Props = {
 };
 
 /**
- * "YAHFAMILIA RECORDS PRESENTS" first appears at 4 seconds in Set Apart.
- * YouTube's loop=1 parameter restarts at 0:00 and drops `start`, so the
- * player seeks back here itself instead of using that parameter.
+ * Loop the full background video from the start. YouTube's loop parameter
+ * restarts unreliably without a playlist, so the player seeks back to 0.
  */
-const LOOP_FROM_SECONDS = 4;
+const LOOP_FROM_SECONDS = 0;
 
 type YouTubePlayer = {
   mute: () => void;
