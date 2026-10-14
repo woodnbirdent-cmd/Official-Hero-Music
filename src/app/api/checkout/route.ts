@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { currentMember } from "@/lib/members";
 import { getProduct, MAX_QUANTITY } from "@/lib/merch";
 import { hasShippingWeight, loadShippingOptions, type ShipTo } from "@/lib/shipping";
 import { isUsState } from "@/lib/us-states";
@@ -139,7 +140,23 @@ export async function POST(request: Request) {
   const shipTo = shipToFromInput(address);
 
   try {
-    const shippingOptions = await loadShippingOptions(items, shipTo);
+    let vip = false;
+    try {
+      vip = (await currentMember())?.tier === "vip";
+    } catch (error) {
+      console.error("VIP membership lookup failed", error);
+    }
+    const shippingOptions = vip
+      ? [
+          {
+            shipping_rate_data: {
+              type: "fixed_amount" as const,
+              display_name: "VIP free shipping",
+              fixed_amount: { amount: 0, currency: "usd" },
+            },
+          },
+        ]
+      : await loadShippingOptions(items, shipTo);
     const customer = await stripe.customers.create({
       name: shipTo.name,
       shipping: {
