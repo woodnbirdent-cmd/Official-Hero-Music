@@ -33,8 +33,11 @@ See `.env.example`:
 | `STRIPE_SECRET_KEY` | Stripe server key. Already set in Vercel. |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 | `SHIPPO_API_TOKEN` | Live merch rates. Already set in Vercel. VIP checkout skips Shippo. |
+| `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Everyone else gets a 404. |
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
+
+`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled / unfulfilled is saved in Postgres.
 
 Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Submissions are logged server-side in MVP (swap for Formspree/DB/email later).
 
@@ -51,6 +54,7 @@ Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lastin
 | `/join` | Membership tiers and mailing list |
 | `/members` | Member updates, early access, VIP downloads |
 | `/account` | Current plan and billing |
+| `/admin` | Private dashboard for `ADMIN_EMAILS` |
 | `/booking` | Booking form |
 
 PWA: `manifest.webmanifest` + icons in `/public`.

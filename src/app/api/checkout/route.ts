@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { currentMember } from "@/lib/members";
 import { getProduct, MAX_QUANTITY } from "@/lib/merch";
+import { encodeOrderItems } from "@/lib/order-items";
 import { hasShippingWeight, loadShippingOptions, type ShipTo } from "@/lib/shipping";
 import { isUsState } from "@/lib/us-states";
 
@@ -193,6 +194,10 @@ export async function POST(request: Request) {
         allowed_countries: ["US"],
       },
       shipping_options: shippingOptions,
+      metadata: {
+        kind: "merch",
+        ...encodeOrderItems(items),
+      },
       success_url: `${origin}/merch/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/merch/cancel`,
     });

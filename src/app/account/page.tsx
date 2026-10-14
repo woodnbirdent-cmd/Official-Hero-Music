@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 import Link from "next/link";
 import SignOutButton from "@/components/auth/SignOutButton";
+import { isAdminEmail } from "@/lib/admin";
 import { requireTier } from "@/lib/members";
 import { TIER_DETAILS } from "@/lib/tiers";
 
@@ -71,6 +72,11 @@ export default async function AccountPage({
               Manage billing
             </button>
           </form>
+        )}
+        {isAdminEmail(member.email) && (
+          <Link href="/admin" className="btn-ghost">
+            Admin
+          </Link>
         )}
         <SignOutButton />
       </div>
