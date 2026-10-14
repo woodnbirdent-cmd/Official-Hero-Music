@@ -51,7 +51,7 @@ export function toCsv(headers: string[], rows: (string | number | boolean)[][]):
 
 export function ordersToCsv(orders: AdminOrder[]): string {
   return toCsv(
-    ["Date", "Customer", "Email", "Items", "Shipping address", "Shipping rate", "Total cents", "Fulfilled", "Checkout session"],
+    ["Date", "Customer", "Email", "Items", "Shipping address", "Shipping rate", "Total cents", "Refunded cents", "Fulfilled", "Archived", "Checkout session"],
     orders.map((order) => [
       new Date(order.created * 1000).toISOString(),
       order.customerName,
@@ -60,7 +60,9 @@ export function ordersToCsv(orders: AdminOrder[]): string {
       order.shippingAddress.replace(/\n/g, ", "),
       order.shippingRate,
       order.totalCents,
+      order.refundedCents,
       order.fulfilled ? "fulfilled" : "unfulfilled",
+      order.archived ? "archived" : "",
       order.id,
     ]),
   );

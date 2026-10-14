@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import DeleteMemberDialog from "@/components/admin/DeleteMemberDialog";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay, statusLabel, tierLabel } from "@/lib/admin-csv";
 import { filterMembers, getAdminData } from "@/lib/admin-data";
@@ -16,6 +17,7 @@ export default async function AdminMembersPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  const admin = await requireAdmin();
   const params = await searchParams;
   const query = (params.q || "").slice(0, 100);
   const data = await getAdminData();
@@ -65,6 +67,7 @@ export default async function AdminMembersPage({
                 </p>
                 <p className="text-hero-muted">Joined {formatDay(member.joined)}</p>
                 <StripeLink href={member.stripeCustomerUrl} />
+                <DeleteMemberDialog member={member} self={member.id === admin.id} />
               </li>
             ))}
           </ul>
@@ -78,6 +81,7 @@ export default async function AdminMembersPage({
                   <th className="px-3 py-3 font-bold">Status</th>
                   <th className="px-3 py-3 font-bold">Joined</th>
                   <th className="px-3 py-3 font-bold">Stripe</th>
+                  <th className="px-3 py-3 font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,6 +94,9 @@ export default async function AdminMembersPage({
                     <td className="px-3 py-3 text-hero-muted">{formatDay(member.joined)}</td>
                     <td className="px-3 py-3">
                       <StripeLink href={member.stripeCustomerUrl} />
+                    </td>
+                    <td className="px-3 py-3">
+                      <DeleteMemberDialog member={member} self={member.id === admin.id} />
                     </td>
                   </tr>
                 ))}

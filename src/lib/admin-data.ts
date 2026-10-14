@@ -1,6 +1,7 @@
 import "server-only";
 import Stripe from "stripe";
 import { requireAdmin } from "@/lib/admin";
+import { ensureAdminTables, recordActivity } from "@/lib/admin-store";
 import { getPool } from "@/lib/auth";
 import { ensureSchema } from "@/lib/members";
 import { formatMoney } from "@/lib/merch";
@@ -28,6 +29,9 @@ export type AdminOrder = {
   shippingRate: string;
   totalCents: number;
   fulfilled: boolean;
+  archived: boolean;
+  paymentIntentId: string | null;
+  refundedCents: number;
   dashboardUrl: string;
 };
 
@@ -77,7 +81,7 @@ export type AdminData = {
 };
 
 type StripeSnapshot = {
-  orders: Omit<AdminOrder, "fulfilled">[];
+  orders: Omit<AdminOrder, "fulfilled" | "archived">[];
   subscriptionRevenue: { created: number; amount: number }[];
   subscriptions: AdminSubscription[];
   truncated: boolean;
@@ -94,7 +98,10 @@ type UserRow = {
 };
 
 let stripeCache: { expires: number; value: StripeSnapshot } | null = null;
-let fulfillmentReady: Promise<void> | null = null;
+
+export function clearAdminStripeCache(): void {
+  stripeCache = null;
+}
 
 function stripeClient(): Stripe | null {
   const secret = process.env.STRIPE_SECRET_KEY;
@@ -193,11 +200,21 @@ async function lookupMissingItems(
   return found;
 }
 
-function toOrder(session: Stripe.Checkout.Session, items: OrderLine[], livemode: boolean): Omit<AdminOrder, "fulfilled"> {
+function paymentFields(session: Stripe.Checkout.Session): { paymentIntentId: string | null; refundedCents: number } {
+  const paymentIntent = session.payment_intent;
+  if (!paymentIntent) return { paymentIntentId: null, refundedCents: 0 };
+  if (typeof paymentIntent === "string") return { paymentIntentId: paymentIntent, refundedCents: 0 };
+  const charge = paymentIntent.latest_charge;
+  const refundedCents = charge && typeof charge !== "string" ? charge.amount_refunded || 0 : 0;
+  return { paymentIntentId: paymentIntent.id, refundedCents };
+}
+
+function toOrder(session: Stripe.Checkout.Session, items: OrderLine[], livemode: boolean): Omit<AdminOrder, "fulfilled" | "archived"> {
   const shipping = session.collected_information?.shipping_details;
   const shippingAddress = shipping
     ? addressLines(shipping.name, shipping.address)
     : addressLines(session.customer_details?.name, session.customer_details?.address);
+  const payment = paymentFields(session);
   return {
     id: session.id,
     created: session.created,
@@ -208,6 +225,8 @@ function toOrder(session: Stripe.Checkout.Session, items: OrderLine[], livemode:
     shippingAddress,
     shippingRate: shippingRateLabel(session),
     totalCents: session.amount_total ?? 0,
+    paymentIntentId: payment.paymentIntentId,
+    refundedCents: payment.refundedCents,
     dashboardUrl: stripeDashboardUrl(`/checkout/sessions/${session.id}`, livemode),
   };
 }
@@ -272,7 +291,7 @@ async function listSessions(stripe: Stripe): Promise<{ rows: Stripe.Checkout.Ses
       stripe.checkout.sessions.list({
         ...params,
         starting_after: startingAfter,
-        expand: ["data.shipping_cost.shipping_rate"],
+        expand: ["data.shipping_cost.shipping_rate", "data.payment_intent.latest_charge"],
       }),
     );
   } catch (error) {
@@ -338,51 +357,57 @@ async function stripeSnapshot(): Promise<StripeSnapshot | null> {
   return value;
 }
 
-async function ensureFulfillmentTable(): Promise<void> {
-  const pool = getPool();
-  if (!pool) return;
-  if (!fulfillmentReady) {
-    fulfillmentReady = pool
-      .query(
-        `CREATE TABLE IF NOT EXISTS order_fulfillment (
-           session_id text PRIMARY KEY,
-           fulfilled boolean NOT NULL DEFAULT false,
-           updated_at timestamptz NOT NULL DEFAULT NOW()
-         )`,
-      )
-      .then(() => undefined)
-      .catch((error: unknown) => {
-        fulfillmentReady = null;
-        throw error;
-      });
-  }
-  await fulfillmentReady;
-}
+type OrderFlag = { fulfilled: boolean; archived: boolean; refundedCents: number };
 
-async function fulfillmentMap(): Promise<Map<string, boolean>> {
+async function orderFlags(): Promise<Map<string, OrderFlag>> {
   const pool = getPool();
-  const map = new Map<string, boolean>();
+  const map = new Map<string, OrderFlag>();
   if (!pool) return map;
-  await ensureFulfillmentTable();
-  const result = await pool.query<{ session_id: string; fulfilled: boolean }>(
-    `SELECT session_id, fulfilled FROM order_fulfillment`,
-  );
-  for (const row of result.rows) map.set(row.session_id, row.fulfilled);
+  await ensureAdminTables();
+  const result = await pool.query<{
+    session_id: string;
+    fulfilled: boolean;
+    archived: boolean;
+    refunded_cents: number;
+  }>(`SELECT session_id, fulfilled, archived, refunded_cents FROM order_fulfillment`);
+  for (const row of result.rows) {
+    map.set(row.session_id, {
+      fulfilled: row.fulfilled,
+      archived: row.archived,
+      refundedCents: Number(row.refunded_cents) || 0,
+    });
+  }
   return map;
 }
 
 export async function setOrderFulfilled(sessionId: string, fulfilled: boolean): Promise<void> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const pool = getPool();
   if (!pool) throw new Error("Database is not configured.");
   if (!/^cs_[A-Za-z0-9]+$/.test(sessionId)) throw new Error("Unknown order.");
-  await ensureFulfillmentTable();
+  await ensureAdminTables();
   await pool.query(
     `INSERT INTO order_fulfillment (session_id, fulfilled, updated_at)
      VALUES ($1, $2, NOW())
      ON CONFLICT (session_id) DO UPDATE SET fulfilled = EXCLUDED.fulfilled, updated_at = NOW()`,
     [sessionId, fulfilled],
   );
+  await recordActivity(admin, fulfilled ? "Marked order fulfilled" : "Marked order unfulfilled", sessionId, "");
+}
+
+export async function setOrderArchived(sessionId: string, archived: boolean): Promise<void> {
+  const admin = await requireAdmin();
+  const pool = getPool();
+  if (!pool) throw new Error("Database is not configured.");
+  if (!/^cs_[A-Za-z0-9]+$/.test(sessionId)) throw new Error("Unknown order.");
+  await ensureAdminTables();
+  await pool.query(
+    `INSERT INTO order_fulfillment (session_id, fulfilled, archived, updated_at)
+     VALUES ($1, false, $2, NOW())
+     ON CONFLICT (session_id) DO UPDATE SET archived = EXCLUDED.archived, updated_at = NOW()`,
+    [sessionId, archived],
+  );
+  await recordActivity(admin, archived ? "Archived order" : "Unarchived order", sessionId, "");
 }
 
 async function loadUsers(): Promise<{ rows: UserRow[]; free: number; signups30d: number }> {
@@ -450,11 +475,11 @@ export async function getAdminData(): Promise<AdminData> {
     stripeError = "Stripe data could not be loaded.";
   }
 
-  let fulfilled = new Map<string, boolean>();
+  let flags = new Map<string, OrderFlag>();
   try {
-    fulfilled = await fulfillmentMap();
+    flags = await orderFlags();
   } catch (error) {
-    console.error("Fulfillment lookup failed", error);
+    console.error("Order flag lookup failed", error);
   }
 
   const byCustomer = new Map<string, AdminSubscription[]>();
@@ -536,10 +561,15 @@ export async function getAdminData(): Promise<AdminData> {
     pastDue,
     signups30d: users.signups30d,
     recentSignups,
-    orders: (snapshot?.orders ?? []).map((order) => ({
-      ...order,
-      fulfilled: fulfilled.get(order.id) ?? false,
-    })),
+    orders: (snapshot?.orders ?? []).map((order) => {
+      const flag = flags.get(order.id);
+      return {
+        ...order,
+        fulfilled: flag?.fulfilled ?? false,
+        archived: flag?.archived ?? false,
+        refundedCents: Math.max(order.refundedCents, flag?.refundedCents ?? 0),
+      };
+    }),
     members,
     subscriptions,
   };

@@ -37,7 +37,7 @@ See `.env.example`:
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
-`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled / unfulfilled is saved in Postgres.
+`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled, archived, and refunded state is saved in Postgres. Paid Stripe payments are not deleted. Member deletes, refunds, and other admin actions are recorded on the Activity tab.
 
 Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Submissions are logged server-side in MVP (swap for Formspree/DB/email later).
 

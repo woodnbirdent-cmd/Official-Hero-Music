@@ -66,7 +66,7 @@ export default async function AdminOverviewPage() {
             All orders
           </Link>
         </div>
-        <OrderCards orders={data.orders.slice(0, 5)} />
+        <OrderCards orders={data.orders.filter((order) => !order.archived).slice(0, 5)} />
       </section>
     </div>
   );

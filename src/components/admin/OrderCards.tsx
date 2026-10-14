@@ -1,17 +1,18 @@
-import { toggleOrderFulfilled } from "@/app/admin/orders/actions";
+import { toggleOrderArchived, toggleOrderFulfilled } from "@/app/admin/orders/actions";
+import RefundOrderDialog from "@/components/admin/RefundOrderDialog";
 import type { AdminOrder } from "@/lib/admin-data";
 import { formatWhen } from "@/lib/admin-csv";
 import { formatMoney } from "@/lib/merch";
 
 export default function OrderCards({
   orders,
-  toggle = false,
+  manage = false,
 }: {
   orders: AdminOrder[];
-  toggle?: boolean;
+  manage?: boolean;
 }) {
   if (orders.length === 0) {
-    return <p className="card-surface text-sm text-hero-light">No paid merch orders yet.</p>;
+    return <p className="card-surface text-sm text-hero-light">No paid merch orders in this view.</p>;
   }
 
   return (
@@ -30,12 +31,12 @@ export default function OrderCards({
             <p className="text-hero-light">{order.itemSummary || "Items not stored"}</p>
             <p className="whitespace-pre-line text-hero-light">{order.shippingAddress || "No shipping address"}</p>
             <p className="text-hero-muted">{order.shippingRate || "No shipping rate"}</p>
-            <Fulfillment order={order} toggle={toggle} />
+            <OrderStatus order={order} manage={manage} />
           </li>
         ))}
       </ul>
       <div className="hidden overflow-x-auto border border-hero-gray md:block">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-[860px] text-left text-sm">
           <thead className="bg-hero-dark text-xs uppercase tracking-wider text-hero-muted">
             <tr>
               <th className="px-3 py-3 font-bold">Date</th>
@@ -56,13 +57,11 @@ export default function OrderCards({
                   <p className="text-hero-muted">{order.customerEmail}</p>
                 </td>
                 <td className="px-3 py-3 text-hero-light">{order.itemSummary || "Not stored"}</td>
-                <td className="whitespace-pre-line px-3 py-3 text-hero-light">
-                  {order.shippingAddress || "—"}
-                </td>
+                <td className="whitespace-pre-line px-3 py-3 text-hero-light">{order.shippingAddress || "—"}</td>
                 <td className="px-3 py-3 text-hero-light">{order.shippingRate || "—"}</td>
                 <td className="px-3 py-3 font-bold text-white">{formatMoney(order.totalCents)}</td>
                 <td className="px-3 py-3">
-                  <Fulfillment order={order} toggle={toggle} />
+                  <OrderStatus order={order} manage={manage} />
                 </td>
               </tr>
             ))}
@@ -73,25 +72,40 @@ export default function OrderCards({
   );
 }
 
-function Fulfillment({ order, toggle }: { order: AdminOrder; toggle: boolean }) {
-  if (!toggle) {
-    return (
-      <p className={`text-xs font-bold uppercase tracking-wider ${order.fulfilled ? "text-hero-accent" : "text-hero-muted"}`}>
-        {order.fulfilled ? "Fulfilled" : "Unfulfilled"}
-      </p>
-    );
-  }
+function OrderStatus({ order, manage }: { order: AdminOrder; manage: boolean }) {
+  const refundLabel =
+    order.refundedCents <= 0
+      ? ""
+      : order.refundedCents >= order.totalCents
+        ? "Refunded"
+        : `Refunded ${formatMoney(order.refundedCents)}`;
 
   return (
-    <form action={toggleOrderFulfilled} className="space-y-2">
-      <input type="hidden" name="sessionId" value={order.id} />
-      <input type="hidden" name="fulfilled" value={order.fulfilled ? "false" : "true"} />
+    <div className="space-y-2">
+      {order.archived && <p className="text-xs font-bold uppercase tracking-wider text-hero-accent">Archived</p>}
       <p className={`text-xs font-bold uppercase tracking-wider ${order.fulfilled ? "text-hero-accent" : "text-hero-muted"}`}>
         {order.fulfilled ? "Fulfilled" : "Unfulfilled"}
       </p>
-      <button type="submit" className="btn-ghost px-3 py-2 text-xs">
-        {order.fulfilled ? "Mark unfulfilled" : "Mark fulfilled"}
-      </button>
-    </form>
+      {refundLabel && <p className="text-xs font-bold uppercase tracking-wider text-hero-accent">{refundLabel}</p>}
+      {manage && (
+        <div className="flex flex-wrap gap-2">
+          <form action={toggleOrderFulfilled}>
+            <input type="hidden" name="sessionId" value={order.id} />
+            <input type="hidden" name="fulfilled" value={order.fulfilled ? "false" : "true"} />
+            <button type="submit" className="btn-ghost px-3 py-2 text-xs">
+              {order.fulfilled ? "Mark unfulfilled" : "Mark fulfilled"}
+            </button>
+          </form>
+          <form action={toggleOrderArchived}>
+            <input type="hidden" name="sessionId" value={order.id} />
+            <input type="hidden" name="archived" value={order.archived ? "false" : "true"} />
+            <button type="submit" className="btn-ghost px-3 py-2 text-xs">
+              {order.archived ? "Unarchive" : "Archive"}
+            </button>
+          </form>
+          <RefundOrderDialog order={order} />
+        </div>
+      )}
+    </div>
   );
 }
