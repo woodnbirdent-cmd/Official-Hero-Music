@@ -39,8 +39,7 @@ export default function CommunityPage() {
           <p className="section-label mb-3">Support</p>
           <h2 className="mb-3 text-xl font-bold uppercase">Fuel the mission</h2>
           <p className="mb-4 text-sm text-hero-light">
-            Free updates, monthly support, or Inner Circle — every tier helps keep the
-            message moving.
+            Free, Supporter, or VIP — every tier helps keep the message moving.
           </p>
           <Link href="/support" className="btn-ghost text-xs">
             View tiers
