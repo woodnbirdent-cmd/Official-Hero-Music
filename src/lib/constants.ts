@@ -40,7 +40,7 @@ export const SOCIALS = [
 ] as const;
 
 export const SPOTIFY_ARTIST_ID = "2RBbpq5Ew0Dys73bn7mdTN";
-export const APPLE_MUSIC_ARTIST_ID = "1780403510";
+export const APPLE_MUSIC_ARTIST_ID = "1788835254";
 export const YOUTUBE_CHANNEL_ID = "UCWs5_tZF0omLCDNNpdyEPBg";
 export const HERO_YOUTUBE_ID = "aw3msUsu1g0";
 export const YOUTUBE_VIDEOS = [
