@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   async redirects() {
-    return [{ source: "/listen", destination: "/music", permanent: false }];
+    return [
+      { source: "/listen", destination: "/music", permanent: false },
+      { source: "/support", destination: "/join", permanent: true },
+    ];
   },
 };
 

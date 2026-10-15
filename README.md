@@ -50,8 +50,7 @@ Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lastin
 | `/videos` | YouTube embeds |
 | `/merch` | Shop coming soon + waitlist |
 | `/community` | Give-back / testimony / prayer form |
-| `/support` | Free / Supporter $7 / VIP $15 |
-| `/join` | Membership tiers and mailing list |
+| `/join` | Membership tiers and mailing list (`/support` redirects here) |
 | `/members` | Member updates, early access, VIP downloads |
 | `/account` | Current plan and billing |
 | `/admin` | Private dashboard for `ADMIN_EMAILS` |

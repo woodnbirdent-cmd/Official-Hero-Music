@@ -41,7 +41,7 @@ export default function CommunityPage() {
           <p className="mb-4 text-sm text-hero-light">
             Free, Supporter, or VIP — every tier helps keep the message moving.
           </p>
-          <Link href="/support" className="btn-ghost text-xs">
+          <Link href="/join" className="btn-ghost text-xs">
             View tiers
           </Link>
         </article>
