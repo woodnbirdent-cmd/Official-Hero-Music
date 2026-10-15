@@ -119,7 +119,6 @@ export const NAV_LINKS = [
   { href: "/videos", label: "Videos" },
   { href: "/merch", label: "Merch" },
   { href: "/community", label: "Community" },
-  { href: "/support", label: "Support" },
   { href: "/join", label: "Join" },
   { href: "/account", label: "Account" },
   { href: "/booking", label: "Booking" },
