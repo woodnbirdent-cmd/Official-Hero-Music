@@ -32,6 +32,7 @@ export type AdminOrder = {
   archived: boolean;
   paymentIntentId: string | null;
   refundedCents: number;
+  shippoOrderId: string | null;
   dashboardUrl: string;
 };
 
@@ -227,6 +228,7 @@ function toOrder(session: Stripe.Checkout.Session, items: OrderLine[], livemode:
     totalCents: session.amount_total ?? 0,
     paymentIntentId: payment.paymentIntentId,
     refundedCents: payment.refundedCents,
+    shippoOrderId: session.metadata?.shippoOrderId?.trim() || null,
     dashboardUrl: stripeDashboardUrl(`/checkout/sessions/${session.id}`, livemode),
   };
 }
@@ -357,7 +359,12 @@ async function stripeSnapshot(): Promise<StripeSnapshot | null> {
   return value;
 }
 
-type OrderFlag = { fulfilled: boolean; archived: boolean; refundedCents: number };
+type OrderFlag = {
+  fulfilled: boolean;
+  archived: boolean;
+  refundedCents: number;
+  shippoOrderId: string | null;
+};
 
 async function orderFlags(): Promise<Map<string, OrderFlag>> {
   const pool = getPool();
@@ -369,12 +376,14 @@ async function orderFlags(): Promise<Map<string, OrderFlag>> {
     fulfilled: boolean;
     archived: boolean;
     refunded_cents: number;
-  }>(`SELECT session_id, fulfilled, archived, refunded_cents FROM order_fulfillment`);
+    shippo_order_id: string | null;
+  }>(`SELECT session_id, fulfilled, archived, refunded_cents, shippo_order_id FROM order_fulfillment`);
   for (const row of result.rows) {
     map.set(row.session_id, {
       fulfilled: row.fulfilled,
       archived: row.archived,
       refundedCents: Number(row.refunded_cents) || 0,
+      shippoOrderId: row.shippo_order_id?.trim() || null,
     });
   }
   return map;
@@ -568,6 +577,7 @@ export async function getAdminData(): Promise<AdminData> {
         fulfilled: flag?.fulfilled ?? false,
         archived: flag?.archived ?? false,
         refundedCents: Math.max(order.refundedCents, flag?.refundedCents ?? 0),
+        shippoOrderId: flag?.shippoOrderId || order.shippoOrderId,
       };
     }),
     members,

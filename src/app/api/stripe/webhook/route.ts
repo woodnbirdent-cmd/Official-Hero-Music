@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { accountsConfigured } from "@/lib/auth";
 import { setMemberTier } from "@/lib/members";
+import { syncMerchShippoOrder } from "@/lib/shippo-order";
 import { TIER_RANK, isTier, tierFromPriceCents, type Tier } from "@/lib/tiers";
 
 export const runtime = "nodejs";
@@ -46,9 +47,6 @@ async function syncCustomer(stripe: Stripe, subscription: Stripe.Subscription) {
 }
 
 export async function POST(request: Request) {
-  if (!accountsConfigured()) {
-    return NextResponse.json({ error: "Accounts are not configured." }, { status: 503 });
-  }
   const secret = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret || !webhookSecret) {
@@ -69,18 +67,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  try {
-    if (
-      event.type === "customer.subscription.created" ||
-      event.type === "customer.subscription.updated"
-    ) {
-      await syncCustomer(stripe, event.data.object);
-    } else if (event.type === "customer.subscription.deleted") {
-      await syncCustomer(stripe, event.data.object);
+  if (
+    event.type === "customer.subscription.created" ||
+    event.type === "customer.subscription.updated" ||
+    event.type === "customer.subscription.deleted"
+  ) {
+    if (!accountsConfigured()) {
+      return NextResponse.json({ error: "Accounts are not configured." }, { status: 503 });
     }
-  } catch (error) {
-    console.error("Stripe webhook failed", error);
-    return NextResponse.json({ error: "Webhook failed." }, { status: 500 });
+    try {
+      await syncCustomer(stripe, event.data.object);
+    } catch (error) {
+      console.error("Stripe webhook failed", error);
+      return NextResponse.json({ error: "Webhook failed." }, { status: 500 });
+    }
+  }
+
+  if (event.type === "checkout.session.completed" && event.data.object.mode === "payment") {
+    await syncMerchShippoOrder(stripe, event.data.object.id);
   }
 
   return NextResponse.json({ received: true });
