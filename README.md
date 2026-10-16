@@ -32,12 +32,14 @@ See `.env.example`:
 | `BETTER_AUTH_URL` | Production site URL, e.g. `https://officialheromusic.com`. Leave unset on Preview. |
 | `STRIPE_SECRET_KEY` | Stripe server key. Already set in Vercel. |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
-| `SHIPPO_API_TOKEN` | Live merch rates. Already set in Vercel. VIP checkout skips Shippo. |
+| `SHIPPO_API_TOKEN` | Live merch rates and paid-order sync. Already set in Vercel. VIP checkout skips live rates. |
 | `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Everyone else gets a 404. |
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
-`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled, archived, and refunded state is saved in Postgres. Paid Stripe payments are not deleted. Member deletes, refunds, and other admin actions are recorded on the Activity tab.
+`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled, archived, and refunded state is saved in Postgres. A paid merch checkout creates a Shippo order so the label can be bought in the Shippo dashboard. Paid Stripe payments are not deleted. Member deletes, refunds, and other admin actions are recorded on the Activity tab.
+
+The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, and `checkout.session.completed`.
 
 Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Submissions are logged server-side in MVP (swap for Formspree/DB/email later).
 

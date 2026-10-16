@@ -45,6 +45,9 @@ async function applyAdminTables(pool: Pool): Promise<void> {
     `ALTER TABLE order_fulfillment ADD COLUMN IF NOT EXISTS refunded_cents integer NOT NULL DEFAULT 0`,
   );
   await pool.query(
+    `ALTER TABLE order_fulfillment ADD COLUMN IF NOT EXISTS shippo_order_id text`,
+  );
+  await pool.query(
     `CREATE TABLE IF NOT EXISTS admin_activity (
        id bigserial PRIMARY KEY,
        admin_user_id text NOT NULL,
@@ -80,6 +83,32 @@ export async function recordActivity(admin: Member, action: string, target: stri
   if (!pool) throw new Error("Database is not configured.");
   await ensureAdminTables();
   await writeActivity(pool, admin, action, target, detail);
+}
+
+export async function storedShippoOrderId(sessionId: string): Promise<string | null> {
+  const pool = getPool();
+  if (!pool) return null;
+  await ensureAdminTables();
+  const result = await pool.query<{ shippo_order_id: string | null }>(
+    `SELECT shippo_order_id FROM order_fulfillment WHERE session_id = $1`,
+    [sessionId],
+  );
+  const id = result.rows[0]?.shippo_order_id?.trim() || "";
+  return id || null;
+}
+
+export async function rememberShippoOrderId(sessionId: string, shippoOrderId: string): Promise<void> {
+  const pool = getPool();
+  if (!pool || !shippoOrderId) return;
+  await ensureAdminTables();
+  await pool.query(
+    `INSERT INTO order_fulfillment (session_id, fulfilled, shippo_order_id, updated_at)
+     VALUES ($1, false, $2, NOW())
+     ON CONFLICT (session_id) DO UPDATE
+       SET shippo_order_id = COALESCE(NULLIF(order_fulfillment.shippo_order_id, ''), EXCLUDED.shippo_order_id),
+           updated_at = NOW()`,
+    [sessionId, shippoOrderId],
+  );
 }
 
 export async function listAdminActivity(): Promise<AdminActivity[]> {

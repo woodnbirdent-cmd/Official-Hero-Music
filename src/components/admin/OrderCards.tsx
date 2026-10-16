@@ -87,6 +87,12 @@ function OrderStatus({ order, manage }: { order: AdminOrder; manage: boolean }) 
         {order.fulfilled ? "Fulfilled" : "Unfulfilled"}
       </p>
       {refundLabel && <p className="text-xs font-bold uppercase tracking-wider text-hero-accent">{refundLabel}</p>}
+      {order.shippoOrderId && (
+        <p className="text-xs">
+          <span className="font-bold uppercase tracking-wider text-hero-accent">Sent to Shippo</span>
+          <span className="mt-1 block break-all font-mono text-hero-light">{order.shippoOrderId}</span>
+        </p>
+      )}
       {manage && (
         <div className="flex flex-wrap gap-2">
           <form action={toggleOrderFulfilled}>

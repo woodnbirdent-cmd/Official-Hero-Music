@@ -51,7 +51,7 @@ export function toCsv(headers: string[], rows: (string | number | boolean)[][]):
 
 export function ordersToCsv(orders: AdminOrder[]): string {
   return toCsv(
-    ["Date", "Customer", "Email", "Items", "Shipping address", "Shipping rate", "Total cents", "Refunded cents", "Fulfilled", "Archived", "Checkout session"],
+    ["Date", "Customer", "Email", "Items", "Shipping address", "Shipping rate", "Total cents", "Refunded cents", "Fulfilled", "Archived", "Shippo order id", "Checkout session"],
     orders.map((order) => [
       new Date(order.created * 1000).toISOString(),
       order.customerName,
@@ -63,6 +63,7 @@ export function ordersToCsv(orders: AdminOrder[]): string {
       order.refundedCents,
       order.fulfilled ? "fulfilled" : "unfulfilled",
       order.archived ? "archived" : "",
+      order.shippoOrderId || "",
       order.id,
     ]),
   );
