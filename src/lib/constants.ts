@@ -19,7 +19,7 @@ export const SOCIALS = [
   { name: "X", href: "https://x.com/HeroMusicPage", label: "X / Twitter" },
   {
     name: "Facebook",
-    href: "https://www.facebook.com/profile.php?id=61565827945921",
+    href: "https://www.facebook.com/heromusicpage",
     label: "Facebook",
   },
   {
