@@ -130,11 +130,7 @@ export const NAV_LINKS = [
 /** #Hero playlist that accepts outside submissions. */
 export const FIRE_PLAYLIST = {
   name: "Christian Rap That's Actually Fire",
-  /**
-   * Public Spotify playlist URL.
-   * Still missing: replace this empty string with the open.spotify.com/playlist link.
-   */
-  spotifyUrl: "",
+  spotifyUrl: "https://open.spotify.com/playlist/66zZ1HtSGwSfZKr53BCpyi",
 } as const;
 
 export const PLAYLIST_OPTIONS = [
