@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import PlaylistSubmissionForm from "@/components/PlaylistSubmissionForm";
 import { FIRE_PLAYLIST } from "@/lib/constants";
 
@@ -20,17 +21,23 @@ export default async function PlaylistPage({
       <p className="section-label mb-3">Submit</p>
       <h1 className="graffiti-heading mb-4">Playlist submissions</h1>
       <div className="mb-6 flex flex-col gap-5 sm:flex-row sm:items-start">
-        {/* Playlist cover lands here later. Swap this frame for the image. */}
-        <div
-          className="flex aspect-square w-40 shrink-0 items-center justify-center border border-dashed border-hero-gray bg-hero-dark p-4 sm:w-48"
-          data-playlist-cover="pending"
-          role="img"
-          aria-label="Playlist cover image coming later"
+        <a
+          href={FIRE_PLAYLIST.spotifyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-fit shrink-0"
         >
-          <p className="text-center text-[11px] font-bold uppercase leading-relaxed tracking-wider text-hero-muted">
-            Cover coming soon
-          </p>
-        </div>
+          <Image
+            src={FIRE_PLAYLIST.cover}
+            alt={`${FIRE_PLAYLIST.name} playlist cover`}
+            width={FIRE_PLAYLIST.coverWidth}
+            height={FIRE_PLAYLIST.coverHeight}
+            className="h-auto w-40 border border-hero-gray sm:w-48"
+            sizes="192px"
+            priority
+          />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
         <div>
           <p className="text-hero-light">
             Your song on <span className="text-white">{FIRE_PLAYLIST.name}</span>. $15 and he

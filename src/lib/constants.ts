@@ -131,6 +131,9 @@ export const NAV_LINKS = [
 export const FIRE_PLAYLIST = {
   name: "Christian Rap That's Actually Fire",
   spotifyUrl: "https://open.spotify.com/playlist/66zZ1HtSGwSfZKr53BCpyi",
+  cover: "/playlist/christian-rap-thats-actually-fire.webp",
+  coverWidth: 736,
+  coverHeight: 761,
 } as const;
 
 export const PLAYLIST_OPTIONS = [
