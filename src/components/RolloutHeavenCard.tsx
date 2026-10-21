@@ -16,13 +16,9 @@ export default function RolloutHeavenCard() {
   return (
     <article className="overflow-hidden border border-hero-gray bg-hero-dark">
       <div className="border-b border-hero-surface">
-        {ROLLOUT_HEAVEN.watchUrl ? (
-          <a href={ROLLOUT_HEAVEN.watchUrl} target="_blank" rel="noopener noreferrer">
-            {image}
-          </a>
-        ) : (
-          image
-        )}
+        <a href={ROLLOUT_HEAVEN.watchUrl} target="_blank" rel="noopener noreferrer" className="block">
+          {image}
+        </a>
       </div>
       <div className="p-6">
         <p className="section-label mb-2">Live stream</p>
@@ -32,22 +28,18 @@ export default function RolloutHeavenCard() {
         <p className="text-sm text-hero-light">
           #Hero&apos;s live-stream review show.
         </p>
-        {ROLLOUT_HEAVEN.watchUrl ? (
-          <a
-            href={ROLLOUT_HEAVEN.watchUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-accent mt-5"
-          >
-            Watch the show
-            <span className="sr-only"> (opens in a new tab)</span>
-          </a>
-        ) : (
-          <p className="mt-4 text-sm text-hero-accent">
-            Watch link coming soon. Still needed: the URL where the show streams, and a screenshot
-            to replace this placeholder image.
-          </p>
-        )}
+        <p className="mt-4 text-sm text-hero-muted">
+          The picture is a placeholder until a screenshot of the live stream replaces it.
+        </p>
+        <a
+          href={ROLLOUT_HEAVEN.watchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-accent mt-5"
+        >
+          Watch the show
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
       </div>
     </article>
   );

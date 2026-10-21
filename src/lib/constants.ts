@@ -161,14 +161,10 @@ export function getPlaylistOption(id: string) {
   return PLAYLIST_OPTIONS.find((option) => option.id === id);
 }
 
-/** Live-stream review show. Image and watch URL are placeholders. */
+/** Live-stream review show. The card image is still a placeholder screenshot. */
 export const ROLLOUT_HEAVEN = {
   show: "Rollout Heaven",
   image: "/reviews/rollout-heaven-placeholder.png",
   imageAlt: "Placeholder frame for a Rollout Heaven live-stream screenshot",
-  /**
-   * Where to watch the show.
-   * Still missing: a YouTube, Twitch, or other live-stream URL.
-   */
-  watchUrl: "",
+  watchUrl: "https://rolloutheaven.com/hero",
 } as const;
