@@ -125,17 +125,17 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2 lg:items-start">
           <div>
             <p className="section-label mb-2">Submit</p>
-            <h2 className="section-heading mb-4 text-3xl">Playlist Submission</h2>
+            <h2 className="section-heading mb-4 text-3xl">Playlist submissions</h2>
             <p className="mb-6 text-hero-light">
-              Send a track for {FIRE_PLAYLIST.name}. $15 and he listens with no placement
-              guaranteed, or $40 for guaranteed placement.
+              Your song on {FIRE_PLAYLIST.name}. $15 and he listens and decides, with no
+              placement guaranteed. $40 and you get placed.
             </p>
             <Link href="/playlist" className="btn-accent">
-              Submit a track
+              Submit to the playlist
             </Link>
           </div>
           <div>
-            <p className="section-label mb-2">Reviews</p>
+            <p className="section-label mb-2">The Line</p>
             <h2 className="section-heading mb-4 text-3xl">Music Reviews</h2>
             <RolloutHeavenCard />
           </div>

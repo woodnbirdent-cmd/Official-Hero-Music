@@ -53,7 +53,7 @@ export default function PlaylistSubmissionForm() {
   return (
     <form onSubmit={submit} className="space-y-6">
       <fieldset>
-        <legend className="section-label mb-3">Choose one</legend>
+        <legend className="section-label mb-3">Pick your placement</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           {PLAYLIST_OPTIONS.map((item) => {
             const active = item.id === option;
@@ -72,10 +72,7 @@ export default function PlaylistSubmissionForm() {
                   onChange={() => setOption(item.id)}
                   className="sr-only"
                 />
-                <p className="text-xs font-bold uppercase tracking-wider text-hero-muted">
-                  {item.id === "listen" ? "Option A" : "Option B"}
-                </p>
-                <p className="mt-2 text-2xl font-black text-white">{formatMoney(item.priceCents)}</p>
+                <p className="text-2xl font-black text-white">{formatMoney(item.priceCents)}</p>
                 <p className="mt-1 font-bold uppercase tracking-wide text-hero-accent">{item.name}</p>
                 <p className="mt-3 text-sm text-hero-light">{item.summary}</p>
               </label>
@@ -102,7 +99,7 @@ export default function PlaylistSubmissionForm() {
         </div>
         <div>
           <label htmlFor="playlist-email" className="mb-2 block text-xs font-bold uppercase tracking-wider">
-            Email
+            Email <span className="font-medium normal-case tracking-normal text-hero-muted">(your confirmation goes here)</span>
           </label>
           <input
             id="playlist-email"
@@ -118,7 +115,7 @@ export default function PlaylistSubmissionForm() {
         </div>
         <div>
           <label htmlFor="playlist-track" className="mb-2 block text-xs font-bold uppercase tracking-wider">
-            Track link
+            Spotify track link
           </label>
           <input
             id="playlist-track"
@@ -126,7 +123,7 @@ export default function PlaylistSubmissionForm() {
             type="url"
             required
             inputMode="url"
-            placeholder="https://"
+            placeholder="https://open.spotify.com/track/..."
             maxLength={500}
             value={trackUrl}
             onChange={(event) => setTrackUrl(event.target.value)}
@@ -138,8 +135,14 @@ export default function PlaylistSubmissionForm() {
             {error}
           </p>
         )}
+        <p className="text-xs leading-relaxed text-hero-muted">
+          Placements are guaranteed only as each option says. Songs may be moved or taken off
+          at his discretion. All purchases are final.
+        </p>
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
-          {pending ? "Starting checkout…" : `Continue to checkout · ${formatMoney(selected.priceCents)}`}
+          {pending
+            ? "Starting checkout…"
+            : `${selected.id === "guaranteed" ? "Pay and get placed" : "Pay for a listen"} · ${formatMoney(selected.priceCents)}`}
         </button>
       </div>
     </form>

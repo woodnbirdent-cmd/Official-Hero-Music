@@ -21,21 +21,21 @@ export default async function PlaylistSuccessPage({
       <h1 className="graffiti-heading mb-4">Submission received</h1>
       <div className="card-surface">
         <p className="mb-4 text-hero-light">
-          If the payment went through, Stripe will email a receipt. The checkout included the
-          artist name, email, and track link for {FIRE_PLAYLIST.name}.
+          If the payment went through, your confirmation follows right after. The checkout
+          had your artist name, email, and Spotify track link for {FIRE_PLAYLIST.name}.
         </p>
         {option?.id === "listen" && (
           <p className="mb-4 text-hero-light">
-            This was the listen-and-decide option. Placement is not guaranteed.
+            This was a listen. He decides if the song fits. Placement is not guaranteed.
           </p>
         )}
         {option?.id === "guaranteed" && (
           <p className="mb-4 text-hero-light">
-            This was the guaranteed placement option for {FIRE_PLAYLIST.name}.
+            This was guaranteed placement. Your song goes on {FIRE_PLAYLIST.name}.
           </p>
         )}
         <Link href="/playlist" className="btn-accent">
-          Back to playlist submission
+          Back to playlist submissions
         </Link>
       </div>
     </div>
