@@ -6,9 +6,9 @@ export default function RolloutHeavenCard() {
     <Image
       src={ROLLOUT_HEAVEN.image}
       alt={ROLLOUT_HEAVEN.imageAlt}
-      width={1600}
-      height={900}
-      className="h-auto w-full object-cover"
+      width={ROLLOUT_HEAVEN.imageWidth}
+      height={ROLLOUT_HEAVEN.imageHeight}
+      className="h-auto w-full"
       sizes="(min-width: 768px) 720px, 100vw"
     />
   );
@@ -27,9 +27,6 @@ export default function RolloutHeavenCard() {
         </h3>
         <p className="text-sm text-hero-light">
           #Hero&apos;s live-stream review show.
-        </p>
-        <p className="mt-4 text-sm text-hero-muted">
-          The picture is a placeholder until a screenshot of the live stream replaces it.
         </p>
         <a
           href={ROLLOUT_HEAVEN.watchUrl}
