@@ -1,9 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import HeroVideoBackground from "@/components/HeroVideoBackground";
+import RolloutHeavenCard from "@/components/RolloutHeavenCard";
 import SocialIcons from "@/components/SocialIcons";
 import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
-import { BIO, HERO_YOUTUBE_ID, SITE, SPOTIFY_ARTIST_ID, YOUTUBE_VIDEOS } from "@/lib/constants";
+import {
+  BIO,
+  FIRE_PLAYLIST,
+  HERO_YOUTUBE_ID,
+  SITE,
+  SPOTIFY_ARTIST_ID,
+  YOUTUBE_VIDEOS,
+} from "@/lib/constants";
 
 export default function HomePage() {
   return (
@@ -35,16 +43,41 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[min(92vh,940px)] max-w-6xl flex-col justify-end px-4 py-16 md:justify-center md:py-24">
+        <div className="relative z-10 mx-auto flex min-h-[min(92vh,940px)] max-w-6xl flex-col px-4 pb-16 pt-5 md:pb-24 md:pt-8">
+          <SocialIcons />
+          <div className="mt-8 flex flex-1 flex-col justify-end md:justify-center">
           <p className="section-label mb-4">Official fan hub · Yahfamilia</p>
-          <Image
-            src="/logo-hero.png"
-            alt="#Hero"
-            width={420}
-            height={160}
-            className="mb-6 h-auto w-full max-w-md"
-            priority
-          />
+          <div className="mb-6 flex w-full flex-col gap-4 md:flex-row md:items-stretch">
+            <div className="mx-auto flex w-full max-w-lg items-center md:mx-0 md:w-1/2 md:max-w-none">
+              <div className="relative aspect-[280/128] w-full">
+                <Image
+                  src="/logo-hero.png"
+                  alt="#Hero"
+                  fill
+                  priority
+                  sizes="(min-width: 768px) 36rem, 32rem"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 md:w-1/2">
+              <Link
+                href="/join"
+                className="flex min-h-28 flex-1 items-center justify-center border-2 border-white bg-black/75 px-4 py-5 text-center font-display text-3xl uppercase leading-none tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-4xl"
+              >
+                Early access to unreleased music
+              </Link>
+              <a
+                href="https://ffm.to/setapartep"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-28 flex-1 items-center justify-center border-2 border-hero-accent bg-black/75 px-4 py-5 text-center font-display text-3xl uppercase leading-none tracking-wide text-hero-accent transition hover:bg-hero-accent hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-4xl"
+              >
+                Listen to the new album
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </div>
+          </div>
           <h1 className="graffiti-heading mb-4 max-w-xl">{SITE.tagline}</h1>
           <p className="mb-8 max-w-lg text-hero-light">
             Christian hip-hop from {SITE.location}. Real testimony. Unyielding faith.
@@ -60,6 +93,7 @@ export default function HomePage() {
             <Link href="/join" className="btn-ghost">
               Join the list
             </Link>
+          </div>
           </div>
         </div>
       </section>
@@ -83,7 +117,27 @@ export default function HomePage() {
                 />
               </ParallaxLayer>
             </div>
-            <SocialIcons />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-hero-dark">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2 lg:items-start">
+          <div>
+            <p className="section-label mb-2">Submit</p>
+            <h2 className="section-heading mb-4 text-3xl">Playlist Submission</h2>
+            <p className="mb-6 text-hero-light">
+              Send a track for {FIRE_PLAYLIST.name}. $15 and he listens with no placement
+              guaranteed, or $40 for guaranteed placement.
+            </p>
+            <Link href="/playlist" className="btn-accent">
+              Submit a track
+            </Link>
+          </div>
+          <div>
+            <p className="section-label mb-2">Reviews</p>
+            <h2 className="section-heading mb-4 text-3xl">Music Reviews</h2>
+            <RolloutHeavenCard />
           </div>
         </div>
       </section>

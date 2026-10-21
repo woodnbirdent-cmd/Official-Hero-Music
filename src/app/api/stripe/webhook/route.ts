@@ -84,7 +84,21 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "checkout.session.completed" && event.data.object.mode === "payment") {
-    await syncMerchShippoOrder(stripe, event.data.object.id);
+    const session = event.data.object;
+    if (session.metadata?.kind === "playlist") {
+      console.log(
+        "[#Hero form:playlist]",
+        JSON.stringify({
+          sessionId: session.id,
+          option: session.metadata.option,
+          artistName: session.metadata.artistName,
+          email: session.metadata.email,
+          trackUrl: session.metadata.trackUrl,
+        }),
+      );
+    } else {
+      await syncMerchShippoOrder(stripe, session.id);
+    }
   }
 
   return NextResponse.json({ received: true });
