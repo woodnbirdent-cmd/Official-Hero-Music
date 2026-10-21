@@ -159,36 +159,12 @@ export function getPlaylistOption(id: string) {
   return PLAYLIST_OPTIONS.find((option) => option.id === id);
 }
 
-/** Live review show on Rollout Heaven. Prices are his live-line tiers, not the playlist. */
+/** Live review show on Rollout Heaven. */
 export const ROLLOUT_HEAVEN = {
   show: "Rollout Heaven",
-  when: "Sundays 6:45 CST",
   image: "/reviews/rollout-heaven.webp",
   imageWidth: 1800,
   imageHeight: 997,
   imageAlt: "Hero on the Rollout Heaven live stream, with the live chat panel",
   watchUrl: "https://rolloutheaven.com/hero",
-  tiers: [
-    { group: "Audio", name: "Standard", price: "$10", detail: "1-min spin + feedback" },
-    { group: "Audio", name: "Front of the Line", price: "$25", detail: "Full track, skip the line" },
-    { group: "Audio", name: "Super Skip", price: "$50", detail: "Full track + 3-min feedback" },
-    {
-      group: "Audio",
-      name: "Top Tier",
-      price: "$100",
-      detail: "Front of the line + guest on the show + 5-min feedback",
-    },
-    {
-      group: "Video",
-      name: "Content Video Reaction",
-      price: "$30",
-      detail: "Your video reacted to live + 5-min feedback",
-    },
-    {
-      group: "Video",
-      name: "Music Video Reaction",
-      price: "$50",
-      detail: "Your music video reacted to live + 5-min feedback",
-    },
-  ],
 } as const;

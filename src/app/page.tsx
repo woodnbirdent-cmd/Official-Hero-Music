@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import HeroVideoBackground from "@/components/HeroVideoBackground";
+import PlaylistCover from "@/components/PlaylistCover";
 import RolloutHeavenCard from "@/components/RolloutHeavenCard";
 import SocialIcons from "@/components/SocialIcons";
 import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
@@ -124,18 +125,20 @@ export default function HomePage() {
       <section className="bg-hero-dark">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2 lg:items-start">
           <div>
-            <p className="section-label mb-2">Submit</p>
-            <h2 className="section-heading mb-4 text-3xl">Playlist submissions</h2>
-            <p className="mb-6 text-hero-light">
-              Your song on {FIRE_PLAYLIST.name}. $15 and he listens and decides, with no
-              placement guaranteed. $40 and you get placed.
-            </p>
-            <Link href="/playlist" className="btn-accent">
-              Submit to the playlist
-            </Link>
+            <p className="section-label mb-4">Submit</p>
+            <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+              <PlaylistCover className="h-auto w-36 sm:w-40" />
+              <div>
+                <h2 className="section-heading mb-3 text-3xl">{FIRE_PLAYLIST.name}</h2>
+                <p className="mb-5 text-hero-light">If it&apos;s actually fire, it belongs here.</p>
+                <Link href="/playlist" className="btn-accent">
+                  Submit your track
+                </Link>
+              </div>
+            </div>
           </div>
           <div>
-            <p className="section-label mb-2">The Line</p>
+            <p className="section-label mb-4">Live</p>
             <h2 className="section-heading mb-4 text-3xl">Music Reviews</h2>
             <RolloutHeavenCard />
           </div>
