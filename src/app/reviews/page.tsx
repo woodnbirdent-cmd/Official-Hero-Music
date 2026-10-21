@@ -3,7 +3,7 @@ import RolloutHeavenCard from "@/components/RolloutHeavenCard";
 
 export const metadata: Metadata = {
   title: "Music Reviews",
-  description: "Hero reviews tracks live on stream, with real fans in the chat. Join The Line.",
+  description: "#Hero reviews tracks live on stream, with real fans in the chat. Join The Line.",
 };
 
 export default function ReviewsPage() {
@@ -12,7 +12,7 @@ export default function ReviewsPage() {
       <p className="section-label mb-3">Live</p>
       <h1 className="graffiti-heading mb-4">Get reviewed live</h1>
       <p className="mb-8 max-w-xl text-hero-light">
-        Hero reviews tracks on stream, with real fans in the chat.
+        #Hero reviews tracks live on stream, with real fans in the chat.
       </p>
       <RolloutHeavenCard intro={false} />
     </div>

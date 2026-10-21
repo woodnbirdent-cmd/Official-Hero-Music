@@ -5,7 +5,7 @@ import { FIRE_PLAYLIST } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Playlist submissions",
-  description: `Your song on ${FIRE_PLAYLIST.name}. $15 and he listens and decides, with no placement guaranteed. $40 and you get placed.`,
+  description: `Your song on ${FIRE_PLAYLIST.name}. $15 and #Hero listens and decides if it fits, with no placement guaranteed. $40 and the placement is guaranteed.`,
 };
 
 export default async function PlaylistPage({
@@ -24,9 +24,9 @@ export default async function PlaylistPage({
         <PlaylistCover />
         <div>
           <p className="text-hero-light">
-            Your song on <span className="text-white">{FIRE_PLAYLIST.name}</span>. $15 and he
-            listens and decides if it fits. Placement is not guaranteed. $40 and the placement
-            is guaranteed: your song goes on the playlist.
+            Your song on <span className="text-white">{FIRE_PLAYLIST.name}</span>. $15 and
+            #Hero listens and decides if it fits. Placement is not guaranteed. $40 and the
+            placement is guaranteed: your song goes on the playlist.
           </p>
           <p className="mt-3 text-sm text-hero-muted">
             Your artist name, email, and Spotify track link are collected at checkout, and

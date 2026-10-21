@@ -3,7 +3,7 @@ import { ROLLOUT_HEAVEN } from "@/lib/constants";
 
 const BENEFITS = [
   "Honest feedback",
-  "Your song in front of his audience, live",
+  "Your song in front of Hero's audience, live",
   "A shot at the playlist",
 ] as const;
 
@@ -29,7 +29,7 @@ export default function RolloutHeavenCard({ intro = true }: { intro?: boolean })
               Get reviewed live
             </h3>
             <p className="text-sm text-hero-light">
-              Hero reviews tracks on stream, with real fans in the chat.
+              #Hero reviews tracks live on stream, with real fans in the chat.
             </p>
           </>
         )}

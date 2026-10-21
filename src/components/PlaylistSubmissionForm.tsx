@@ -137,7 +137,7 @@ export default function PlaylistSubmissionForm() {
         )}
         <p className="text-xs leading-relaxed text-hero-muted">
           Placements are guaranteed only as each option says. Songs may be moved or taken off
-          at his discretion. All purchases are final.
+          at #Hero&apos;s discretion. All purchases are final.
         </p>
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
           {pending

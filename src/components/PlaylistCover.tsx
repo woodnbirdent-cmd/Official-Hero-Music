@@ -2,12 +2,12 @@ import Image from "next/image";
 import { FIRE_PLAYLIST } from "@/lib/constants";
 
 export default function PlaylistCover({
-  className = "h-auto w-40 sm:w-48",
+  className = "w-full sm:w-96",
 }: {
   className?: string;
 }) {
   return (
-    <div className="relative w-fit shrink-0">
+    <div className={`relative shrink-0 ${className}`}>
       <a
         href={FIRE_PLAYLIST.spotifyUrl}
         target="_blank"
@@ -19,8 +19,8 @@ export default function PlaylistCover({
           alt={`${FIRE_PLAYLIST.name} playlist cover`}
           width={FIRE_PLAYLIST.coverWidth}
           height={FIRE_PLAYLIST.coverHeight}
-          className={`border border-hero-gray ${className}`}
-          sizes="192px"
+          className="h-auto w-full border border-hero-gray"
+          sizes="(min-width: 640px) 384px, 100vw"
         />
         <span className="sr-only"> (opens in a new tab)</span>
       </a>

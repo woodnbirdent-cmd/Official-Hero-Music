@@ -141,7 +141,7 @@ export const PLAYLIST_OPTIONS = [
     id: "listen",
     name: "Listen and decide",
     priceCents: 1500,
-    summary: "Your song gets a listen. He decides if it fits. Placement is not guaranteed.",
+    summary: "#Hero listens and decides if it fits. Placement is not guaranteed.",
     checkoutName: "Playlist submission — listen and decide",
   },
   {

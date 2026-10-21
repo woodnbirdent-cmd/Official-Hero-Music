@@ -127,7 +127,7 @@ export default function HomePage() {
           <div>
             <p className="section-label mb-4">Submit</p>
             <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-              <PlaylistCover className="h-auto w-36 sm:w-40" />
+              <PlaylistCover className="w-full sm:w-80" />
               <div>
                 <h2 className="section-heading mb-3 text-3xl">{FIRE_PLAYLIST.name}</h2>
                 <p className="mb-5 text-hero-light">If it&apos;s actually fire, it belongs here.</p>

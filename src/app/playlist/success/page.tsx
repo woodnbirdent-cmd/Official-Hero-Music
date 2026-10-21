@@ -26,7 +26,7 @@ export default async function PlaylistSuccessPage({
         </p>
         {option?.id === "listen" && (
           <p className="mb-4 text-hero-light">
-            This was a listen. He decides if the song fits. Placement is not guaranteed.
+            This was a listen. #Hero decides if the song fits. Placement is not guaranteed.
           </p>
         )}
         {option?.id === "guaranteed" && (
