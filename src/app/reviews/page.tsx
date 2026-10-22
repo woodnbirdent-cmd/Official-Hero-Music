@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import RolloutHeavenCard from "@/components/RolloutHeavenCard";
+import ReviewTierCards from "@/components/ReviewTierCards";
 import { REVIEW_HEADLINE, REVIEW_SUBLINE } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export default function ReviewsPage() {
       <p className="section-label mb-3">Live</p>
       <h1 className="graffiti-heading mb-4">{REVIEW_HEADLINE}</h1>
       <p className="mb-8 max-w-xl text-hero-light">{REVIEW_SUBLINE}</p>
-      <RolloutHeavenCard />
+      <ReviewTierCards />
     </div>
   );
 }
