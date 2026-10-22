@@ -7,7 +7,7 @@ export const SITE = {
   location: "Jefferson City, Missouri",
   label: "Yahfamilia / YahFamilia Music",
   genre: "Christian hip-hop (CHH)",
-  tagline: "Thank God I am who I am and not who I was",
+  tagline: "Praise God I am who I am and not who I was",
   description:
     "Official #Hero Music — Christian hip-hop from Jefferson City, MO. Raw redemption testimony. Yahfamilia.",
 } as const;
@@ -115,6 +115,8 @@ export const PRESS_ASSETS = [
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/music", label: "Music" },
+  { href: "/playlist", label: "Playlist" },
+  { href: "/reviews", label: "Reviews" },
   { href: "/tour", label: "Tour" },
   { href: "/videos", label: "Videos" },
   { href: "/merch", label: "Merch" },
@@ -124,3 +126,45 @@ export const NAV_LINKS = [
   { href: "/booking", label: "Booking" },
   { href: "/epk", label: "EPK" },
 ] as const;
+
+/** #Hero playlist that accepts outside submissions. */
+export const FIRE_PLAYLIST = {
+  name: "Christian Rap That's Actually Fire",
+  spotifyUrl: "https://open.spotify.com/playlist/66zZ1HtSGwSfZKr53BCpyi",
+  cover: "/playlist/christian-rap-thats-actually-fire.webp",
+  coverWidth: 736,
+  coverHeight: 761,
+} as const;
+
+export const PLAYLIST_OPTIONS = [
+  {
+    id: "listen",
+    name: "Listen and decide",
+    priceCents: 1500,
+    summary: "#Hero listens and decides if it fits. Placement is not guaranteed.",
+    checkoutName: "Playlist submission — listen and decide",
+  },
+  {
+    id: "guaranteed",
+    name: "Guaranteed placement",
+    priceCents: 4000,
+    summary: "Guaranteed placement. Your song goes on the playlist.",
+    checkoutName: "Playlist submission — guaranteed placement",
+  },
+] as const;
+
+export type PlaylistOptionId = (typeof PLAYLIST_OPTIONS)[number]["id"];
+
+export function getPlaylistOption(id: string) {
+  return PLAYLIST_OPTIONS.find((option) => option.id === id);
+}
+
+/** Live review show on Rollout Heaven. */
+export const ROLLOUT_HEAVEN = {
+  show: "Rollout Heaven",
+  image: "/reviews/rollout-heaven.webp",
+  imageWidth: 1800,
+  imageHeight: 997,
+  imageAlt: "Hero on the Rollout Heaven live stream, with the live chat panel",
+  watchUrl: "https://rolloutheaven.com/hero",
+} as const;

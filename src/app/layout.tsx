@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Inter, Bebas_Neue } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -19,13 +20,15 @@ const display = Bebas_Neue({
   display: "swap",
 });
 
+const shareDescription = `${SITE.tagline}. ${SITE.description}`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
     default: "Official #Hero Music",
     template: "%s | Official #Hero Music",
   },
-  description: SITE.description,
+  description: shareDescription,
   applicationName: SITE.name,
   authors: [{ name: SITE.artist }],
   keywords: [
@@ -43,13 +46,13 @@ export const metadata: Metadata = {
     url: SITE.url,
     siteName: SITE.name,
     title: "Official #Hero Music",
-    description: SITE.description,
+    description: shareDescription,
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "#Hero" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Official #Hero Music",
-    description: SITE.description,
+    description: shareDescription,
     images: ["/og.png"],
   },
   icons: {
@@ -74,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="flex-1">{children}</main>
         <Footer />
         <ListenBar />
+        <Analytics />
       </body>
     </html>
   );

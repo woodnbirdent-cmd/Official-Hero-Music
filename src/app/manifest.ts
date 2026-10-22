@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
+import { SITE } from "@/lib/constants";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Official #Hero Music",
     short_name: "#Hero",
-    description:
-      "Christian hip-hop artist #Hero — official fan hub. Raw redemption testimony. Yahfamilia.",
+    description: `${SITE.tagline}. Christian hip-hop artist #Hero — official fan hub. Raw redemption testimony. Yahfamilia.`,
     start_url: "/",
     display: "standalone",
     background_color: "#000000",

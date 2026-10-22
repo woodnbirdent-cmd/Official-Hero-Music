@@ -329,7 +329,10 @@ async function fetchStripe(stripe: Stripe): Promise<StripeSnapshot> {
   ]);
 
   const paidSessions = sessions.rows.filter(
-    (session) => session.mode === "payment" && session.payment_status === "paid",
+    (session) =>
+      session.mode === "payment" &&
+      session.payment_status === "paid" &&
+      session.metadata?.kind !== "playlist",
   );
   const extraItems = await lookupMissingItems(stripe, paidSessions);
   const orders = paidSessions

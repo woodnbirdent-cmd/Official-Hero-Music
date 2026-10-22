@@ -24,14 +24,14 @@ export default function Header() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
+        <nav className="hidden items-center justify-end gap-0.5 xl:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-2.5 py-2 text-[11px] font-bold uppercase tracking-wider transition ${
+                className={`px-2 py-2 text-[11px] font-bold uppercase tracking-wider transition ${
                   active
                     ? "bg-white text-black"
                     : "text-hero-light hover:bg-hero-surface hover:text-white"
