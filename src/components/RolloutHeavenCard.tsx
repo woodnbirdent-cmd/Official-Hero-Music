@@ -4,7 +4,7 @@ import { ROLLOUT_HEAVEN } from "@/lib/constants";
 const BENEFITS = [
   "Honest feedback",
   "Your song in front of Hero's audience, live",
-  "A shot at the playlist",
+  "Stay champ 4 weeks. Win a collab + cash ($1,000 value)",
 ] as const;
 
 export default function RolloutHeavenCard({ intro = true }: { intro?: boolean }) {
