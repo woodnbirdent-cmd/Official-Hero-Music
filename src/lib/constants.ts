@@ -168,3 +168,63 @@ export const ROLLOUT_HEAVEN = {
   imageAlt: "Hero on the Rollout Heaven live stream, with the live chat panel",
   watchUrl: "https://rolloutheaven.com/hero",
 } as const;
+
+export const REVIEW_HEADLINE = "Get reviewed live";
+export const REVIEW_SUBLINE = "Submit a song, beat, music video, or content reaction";
+export const REVIEW_POT_LINE = "Stay champ 4 weeks. Win a collab + cash ($1,000 value)";
+
+export const REVIEW_GROUPS = [
+  {
+    id: "audio",
+    label: "Audio",
+    tiers: [
+      {
+        id: "standard",
+        name: "Standard",
+        price: "$10",
+        detail: "1-min spin + feedback",
+      },
+      {
+        id: "front",
+        name: "Front of the Line",
+        price: "$25",
+        detail: "Full track, skip the line",
+      },
+      {
+        id: "superskip",
+        name: "Super Skip",
+        price: "$50",
+        detail: "Full track + 3-min feedback",
+        badge: "Popular",
+      },
+      {
+        id: "toptier",
+        name: "Top Tier",
+        price: "$100",
+        detail: "Front of the line + guest on the show + 5-min feedback",
+        badge: "Best",
+      },
+    ],
+  },
+  {
+    id: "video",
+    label: "Video",
+    tiers: [
+      {
+        id: "content",
+        name: "Content Video Reaction",
+        price: "$30",
+        detail: "Your video reacted to live + 5-min feedback",
+        note: "YouTube link",
+        badge: "New",
+      },
+      {
+        id: "music-video",
+        name: "Music Video Reaction",
+        price: "$50",
+        detail: "Your music video reacted to live + 5-min feedback",
+        note: "YouTube link",
+      },
+    ],
+  },
+] as const;

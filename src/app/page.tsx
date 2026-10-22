@@ -9,6 +9,8 @@ import {
   BIO,
   FIRE_PLAYLIST,
   HERO_YOUTUBE_ID,
+  REVIEW_HEADLINE,
+  REVIEW_SUBLINE,
   SITE,
   SPOTIFY_ARTIST_ID,
   YOUTUBE_VIDEOS,
@@ -123,7 +125,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-hero-dark">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2 lg:items-start">
+        <div className="mx-auto max-w-6xl px-4 py-16">
           <div>
             <p className="section-label mb-4">Submit</p>
             <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
@@ -137,9 +139,10 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div>
+          <div className="mt-16">
             <p className="section-label mb-4">Live</p>
-            <h2 className="section-heading mb-4 text-3xl">Music Reviews</h2>
+            <h2 className="section-heading mb-3 text-3xl">{REVIEW_HEADLINE}</h2>
+            <p className="mb-6 max-w-xl text-hero-light">{REVIEW_SUBLINE}</p>
             <RolloutHeavenCard />
           </div>
         </div>
