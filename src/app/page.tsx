@@ -46,16 +46,16 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto flex min-h-[min(92vh,940px)] max-w-6xl flex-col px-4 pb-16 pt-5 md:pb-24 md:pt-8">
           <SocialIcons />
-          <div className="mt-4 grid max-w-3xl gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid max-w-lg grid-cols-2 gap-2 sm:max-w-xl">
             <Link
               href="/merch"
-              className="flex min-h-14 items-center justify-center border-2 border-white bg-white px-4 py-3 text-center font-display text-3xl uppercase leading-none tracking-wide text-black transition hover:bg-black hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-16 sm:text-4xl"
+              className="flex min-h-11 items-center justify-center border-2 border-white bg-white px-3 py-2 text-center font-display text-lg uppercase leading-none tracking-wide text-black transition hover:bg-black hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-12 sm:text-xl"
             >
               Shop Merch
             </Link>
             <Link
               href="/booking"
-              className="flex min-h-14 items-center justify-center border-2 border-white bg-black px-4 py-3 text-center font-display text-3xl uppercase leading-none tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-16 sm:text-4xl"
+              className="flex min-h-11 items-center justify-center border-2 border-white bg-black px-3 py-2 text-center font-display text-lg uppercase leading-none tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-12 sm:text-xl"
             >
               Book #Hero
             </Link>
@@ -75,10 +75,10 @@ export default function HomePage() {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-3 md:w-1/2">
+            <div className="flex flex-col gap-2 md:w-1/2">
               <Link
                 href="/join"
-                className="flex min-h-28 flex-1 items-center justify-center border-2 border-white bg-black/75 px-4 py-5 text-center font-display text-3xl uppercase leading-none tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-4xl"
+                className="flex min-h-12 items-center justify-center border-2 border-white bg-black/75 px-3 py-2.5 text-center font-display text-xl uppercase leading-tight tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-14 sm:text-2xl"
               >
                 Early access to unreleased music
               </Link>
@@ -86,7 +86,7 @@ export default function HomePage() {
                 href="https://ffm.to/setapartep"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-28 flex-1 items-center justify-center border-2 border-hero-accent bg-black/75 px-4 py-5 text-center font-display text-3xl uppercase leading-none tracking-wide text-hero-accent transition hover:bg-hero-accent hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-4xl"
+                className="flex min-h-12 items-center justify-center border-2 border-hero-accent bg-black/75 px-3 py-2.5 text-center font-display text-xl uppercase leading-tight tracking-wide text-hero-accent transition hover:bg-hero-accent hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-14 sm:text-2xl"
               >
                 Listen to the new album
                 <span className="sr-only"> (opens in a new tab)</span>
