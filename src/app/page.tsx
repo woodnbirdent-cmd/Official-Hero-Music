@@ -14,6 +14,9 @@ import {
   YOUTUBE_VIDEOS,
 } from "@/lib/constants";
 
+const heroCta =
+  "flex h-[4.75rem] w-full items-center justify-center border-2 px-2 py-2 text-center font-display text-sm uppercase leading-tight tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-16 sm:px-3 sm:text-base md:h-[4.5rem] md:text-lg";
+
 export default function HomePage() {
   return (
     <ParallaxRoot>
@@ -45,10 +48,10 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[min(92vh,940px)] max-w-6xl flex-col px-4 pb-16 pt-5 md:pb-24 md:pt-8">
-          <SocialIcons />
+          <SocialIcons singleLine />
           <div className="mt-8 flex flex-1 flex-col justify-end md:justify-center">
           <p className="section-label mb-4">Official fan hub · Yahfamilia</p>
-          <div className="mb-6 flex w-full flex-col gap-4 md:flex-row md:items-stretch">
+          <div className="mb-6 flex w-full flex-col gap-4 md:flex-row md:items-center">
             <div className="mx-auto flex w-full max-w-lg items-center md:mx-0 md:w-1/2 md:max-w-none">
               <div className="relative aspect-[280/128] w-full">
                 <Image
@@ -61,18 +64,21 @@ export default function HomePage() {
                 />
               </div>
             </div>
-            <div className="flex flex-col gap-3 md:w-1/2">
-              <Link
-                href="/join"
-                className="flex min-h-28 flex-1 items-center justify-center border-2 border-white bg-black/75 px-4 py-5 text-center font-display text-3xl uppercase leading-none tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-4xl"
-              >
+            <div className="grid w-full grid-cols-2 grid-rows-2 gap-2 md:w-1/2">
+              <Link href="/merch" className={`${heroCta} border-white bg-white text-black hover:bg-black hover:text-white focus-visible:ring-white`}>
+                Shop Merch
+              </Link>
+              <Link href="/booking" className={`${heroCta} border-white bg-black text-white hover:bg-white hover:text-black focus-visible:ring-white`}>
+                Book #Hero
+              </Link>
+              <Link href="/join" className={`${heroCta} border-white bg-black/75 text-white hover:bg-white hover:text-black focus-visible:ring-white`}>
                 Early access to unreleased music
               </Link>
               <a
                 href="https://ffm.to/setapartep"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-28 flex-1 items-center justify-center border-2 border-hero-accent bg-black/75 px-4 py-5 text-center font-display text-3xl uppercase leading-none tracking-wide text-hero-accent transition hover:bg-hero-accent hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-hero-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:text-4xl"
+                className={`${heroCta} border-hero-accent bg-black/75 text-hero-accent hover:bg-hero-accent hover:text-black focus-visible:ring-hero-accent`}
               >
                 Listen to the new album
                 <span className="sr-only"> (opens in a new tab)</span>
