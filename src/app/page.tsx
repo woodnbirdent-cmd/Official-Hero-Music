@@ -46,6 +46,20 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto flex min-h-[min(92vh,940px)] max-w-6xl flex-col px-4 pb-16 pt-5 md:pb-24 md:pt-8">
           <SocialIcons />
+          <div className="mt-4 grid max-w-3xl gap-3 sm:grid-cols-2">
+            <Link
+              href="/merch"
+              className="flex min-h-14 items-center justify-center border-2 border-white bg-white px-4 py-3 text-center font-display text-3xl uppercase leading-none tracking-wide text-black transition hover:bg-black hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-16 sm:text-4xl"
+            >
+              Shop Merch
+            </Link>
+            <Link
+              href="/booking"
+              className="flex min-h-14 items-center justify-center border-2 border-white bg-black px-4 py-3 text-center font-display text-3xl uppercase leading-none tracking-wide text-white transition hover:bg-white hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:min-h-16 sm:text-4xl"
+            >
+              Book #Hero
+            </Link>
+          </div>
           <div className="mt-8 flex flex-1 flex-col justify-end md:justify-center">
           <p className="section-label mb-4">Official fan hub · Yahfamilia</p>
           <div className="mb-6 flex w-full flex-col gap-4 md:flex-row md:items-stretch">
