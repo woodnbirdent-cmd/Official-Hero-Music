@@ -1,5 +1,6 @@
 import "server-only";
 import type { AdminMember, AdminOrder } from "@/lib/admin-data";
+import { formatChicago } from "@/lib/admin-orders";
 
 export function statusLabel(status: string): string {
   if (status === "past_due") return "Past due";
@@ -51,12 +52,17 @@ export function toCsv(headers: string[], rows: (string | number | boolean)[][]):
 
 export function ordersToCsv(orders: AdminOrder[]): string {
   return toCsv(
-    ["Date", "Customer", "Email", "Items", "Shipping address", "Shipping rate", "Total cents", "Refunded cents", "Fulfilled", "Archived", "Shippo order id", "Checkout session"],
+    ["Date", "Central time", "Customer", "Email", "Type", "Items", "Artist", "Track", "Details", "Shipping address", "Shipping rate", "Total cents", "Refunded cents", "Fulfilled", "Archived", "Shippo order id", "Checkout session"],
     orders.map((order) => [
       new Date(order.created * 1000).toISOString(),
+      formatChicago(order.created),
       order.customerName,
       order.customerEmail,
+      order.typeLabel,
       order.itemSummary,
+      order.artistName,
+      order.trackUrl,
+      order.details.map((detail) => `${detail.label}: ${detail.value}`).join("; "),
       order.shippingAddress.replace(/\n/g, ", "),
       order.shippingRate,
       order.totalCents,

@@ -2,12 +2,11 @@ import "server-only";
 import Stripe from "stripe";
 import { requireAdmin } from "@/lib/admin";
 import { clearAdminStripeCache } from "@/lib/admin-data";
-import { ensureAdminTables, recordActivity, writeActivity } from "@/lib/admin-store";
+import { ensureAdminTables, writeActivity } from "@/lib/admin-store";
 import { getPool } from "@/lib/auth";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-const SESSION_ID = /^cs_[A-Za-z0-9]+$/;
 const USER_ID = /^[A-Za-z0-9_-]{1,128}$/;
 
 function stripeClient(): Stripe | null {
@@ -137,68 +136,7 @@ export async function deleteMemberAccount(input: {
 }
 
 export async function refundMerchOrder(sessionId: string): Promise<ActionResult> {
-  const admin = await requireAdmin();
-  if (!SESSION_ID.test(sessionId)) return { ok: false, error: "Unknown order." };
-  const stripe = stripeClient();
-  if (!stripe) return { ok: false, error: "Stripe is not configured." };
-  const pool = getPool();
-  if (!pool) return { ok: false, error: "Database is not configured." };
-  await ensureAdminTables();
-
-  let session: Stripe.Checkout.Session;
-  try {
-    session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ["payment_intent.latest_charge"],
-    });
-  } catch (error) {
-    console.error("Checkout lookup failed", error);
-    return { ok: false, error: stripeError(error) === "missing" ? "That order was not found in Stripe." : "Stripe could not load the order." };
-  }
-
-  if (session.mode !== "payment" || session.payment_status !== "paid") {
-    return { ok: false, error: "This checkout is not a paid merch order." };
-  }
-
-  const paymentIntent = session.payment_intent;
-  if (!paymentIntent) return { ok: false, error: "This order has no Stripe payment to refund." };
-  const paymentIntentId = typeof paymentIntent === "string" ? paymentIntent : paymentIntent.id;
-  let charge = typeof paymentIntent === "string" ? null : paymentIntent.latest_charge;
-  if (typeof charge === "string") {
-    charge = await stripe.charges.retrieve(charge);
-  }
-  const stored = await pool.query<{ refunded_cents: number }>(
-    `SELECT refunded_cents FROM order_fulfillment WHERE session_id = $1`,
-    [sessionId],
-  );
-  const already = Math.max(
-    charge && typeof charge !== "string" ? charge.amount_refunded || 0 : 0,
-    Number(stored.rows[0]?.refunded_cents) || 0,
-  );
-  const total = session.amount_total ?? 0;
-  const remaining = total - already;
-  if (remaining <= 0) return { ok: false, error: "This payment is already refunded." };
-
-  let refund: Stripe.Refund;
-  try {
-    refund = await stripe.refunds.create(
-      { payment_intent: paymentIntentId, amount: remaining },
-      { idempotencyKey: `admin-refund-${sessionId}-${remaining}` },
-    );
-  } catch (error) {
-    console.error("Stripe refund failed", error);
-    return { ok: false, error: stripeError(error) };
-  }
-
-  const refundedCents = already + (refund.amount ?? remaining);
-  await pool.query(
-    `INSERT INTO order_fulfillment (session_id, fulfilled, refunded_cents, updated_at)
-     VALUES ($1, false, $2, NOW())
-     ON CONFLICT (session_id) DO UPDATE
-       SET refunded_cents = GREATEST(order_fulfillment.refunded_cents, EXCLUDED.refunded_cents),
-           updated_at = NOW()`,
-    [sessionId, refundedCents],
-  );
-  await recordActivity(admin, "Refunded order", sessionId, `${refundedCents} cents refunded. The Stripe payment was not deleted.`);
-  clearAdminStripeCache();
-  return { ok: true };
+  await requireAdmin();
+  if (!sessionId) return { ok: false, error: "Orders are read-only. Refunds are not available here." };
+  return { ok: false, error: "Orders are read-only. Refunds are not available here." };
 }

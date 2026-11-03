@@ -33,11 +33,13 @@ See `.env.example`:
 | `STRIPE_SECRET_KEY` | Stripe server key. Already set in Vercel. |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 | `SHIPPO_API_TOKEN` | Live merch rates and paid-order sync. Already set in Vercel. VIP checkout skips live rates. |
-| `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Everyone else gets a 404. |
+| `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Set to `woodnbirdent@gmail.com,hero@officialheromusic.com`. Everyone else is denied. |
+| `RESEND_API_KEY` | Sends admin magic-link sign-in email. |
+| `ADMIN_EMAIL_FROM` | From address for that email. The domain must be verified in Resend. |
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
-`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled, archived, and refunded state is saved in Postgres. A paid merch checkout creates a Shippo order so the label can be bought in the Shippo dashboard. Paid Stripe payments are not deleted. Member deletes, refunds, and other admin actions are recorded on the Activity tab.
+`/admin` is limited to `ADMIN_EMAILS`. Sign in at `/admin/sign-in` with an email magic link (Resend) or the password on an allowlisted account that already exists. New sign-ups cannot claim an admin email. The orders and customers pages read paid Stripe Checkout sessions (cached about a minute): merch, feature-verse Payment Links, and playlist submissions. Times are America/Chicago. Those pages do not refund or edit Stripe. Merch fulfilled and archived flags are saved in Postgres. A paid merch checkout creates a Shippo order so the label can be bought in the Shippo dashboard. `/admin` sends `noindex` and is omitted from `robots.txt` and the sitemap.
 
 The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, and `checkout.session.completed`.
 

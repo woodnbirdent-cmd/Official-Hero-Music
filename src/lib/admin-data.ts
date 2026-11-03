@@ -4,6 +4,14 @@ import { requireAdmin } from "@/lib/admin";
 import { ensureAdminTables, recordActivity } from "@/lib/admin-store";
 import { getPool } from "@/lib/auth";
 import { ensureSchema } from "@/lib/members";
+import {
+  classifyCheckout,
+  groupCustomers,
+  orderDetails,
+  type AdminCustomer,
+  type OrderDetail,
+  type OrderType,
+} from "@/lib/admin-orders";
 import { formatMoney } from "@/lib/merch";
 import {
   decodeOrderItems,
@@ -16,7 +24,7 @@ import { isTier, tierFromPriceCents, type Tier } from "@/lib/tiers";
 const CACHE_MS = 60_000;
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
-const LINE_ITEM_LOOKUPS = 40;
+const LINE_ITEM_LOOKUPS = 250;
 
 export type AdminOrder = {
   id: string;
@@ -28,6 +36,11 @@ export type AdminOrder = {
   shippingAddress: string;
   shippingRate: string;
   totalCents: number;
+  type: OrderType;
+  typeLabel: string;
+  artistName: string;
+  trackUrl: string;
+  details: OrderDetail[];
   fulfilled: boolean;
   archived: boolean;
   paymentIntentId: string | null;
@@ -67,9 +80,10 @@ export type AdminData = {
   truncated: boolean;
   databaseError: string | null;
   cachedAt: number | null;
+  itemsIncomplete: boolean;
   revenue: {
-    month: { merch: number; subscriptions: number };
-    allTime: { merch: number; subscriptions: number };
+    month: RevenueBucket;
+    allTime: RevenueBucket;
   };
   tiers: { free: number; supporter: number; vip: number; other: number };
   mrrCents: number;
@@ -77,8 +91,16 @@ export type AdminData = {
   signups30d: number;
   recentSignups: { email: string; name: string; joined: Date }[];
   orders: AdminOrder[];
+  customers: AdminCustomer<AdminOrder>[];
   members: AdminMember[];
   subscriptions: AdminSubscription[];
+};
+
+export type RevenueBucket = {
+  merch: number;
+  featureVerse: number;
+  playlist: number;
+  subscriptions: number;
 };
 
 type StripeSnapshot = {
@@ -86,6 +108,7 @@ type StripeSnapshot = {
   subscriptionRevenue: { created: number; amount: number }[];
   subscriptions: AdminSubscription[];
   truncated: boolean;
+  itemsIncomplete: boolean;
   livemode: boolean;
 };
 
@@ -170,14 +193,16 @@ function linesFromSession(session: Stripe.Checkout.Session): OrderLine[] {
 async function lookupMissingItems(
   stripe: Stripe,
   sessions: Stripe.Checkout.Session[],
-): Promise<Map<string, OrderLine[]>> {
-  const missing = sessions.filter((session) => !hasOrderItemMetadata(session.metadata)).slice(0, LINE_ITEM_LOOKUPS);
+): Promise<{ items: Map<string, OrderLine[]>; incomplete: boolean }> {
+  const missing = sessions.filter((session) => !hasOrderItemMetadata(session.metadata));
+  const incomplete = missing.length > LINE_ITEM_LOOKUPS;
+  const batch = missing.slice(0, LINE_ITEM_LOOKUPS);
   const found = new Map<string, OrderLine[]>();
   let index = 0;
 
   async function worker() {
-    while (index < missing.length) {
-      const session = missing[index];
+    while (index < batch.length) {
+      const session = batch[index];
       index += 1;
       if (!session) continue;
       try {
@@ -197,8 +222,22 @@ async function lookupMissingItems(
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(4, missing.length) }, () => worker()));
-  return found;
+  await Promise.all(Array.from({ length: Math.min(4, batch.length) }, () => worker()));
+  return { items: found, incomplete };
+}
+
+function stringMetadata(metadata: Stripe.Metadata | null | undefined): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(metadata || {})) {
+    if (typeof value === "string") result[key] = value;
+  }
+  return result;
+}
+
+function paymentLinkId(session: Stripe.Checkout.Session): string | null {
+  const link = session.payment_link;
+  if (!link) return null;
+  return typeof link === "string" ? link : link.id;
 }
 
 function paymentFields(session: Stripe.Checkout.Session): { paymentIntentId: string | null; refundedCents: number } {
@@ -211,6 +250,22 @@ function paymentFields(session: Stripe.Checkout.Session): { paymentIntentId: str
 }
 
 function toOrder(session: Stripe.Checkout.Session, items: OrderLine[], livemode: boolean): Omit<AdminOrder, "fulfilled" | "archived"> {
+  const metadata = stringMetadata(session.metadata);
+  const classified = classifyCheckout({
+    metadata,
+    paymentLinkId: paymentLinkId(session),
+    mode: session.mode,
+    lineLabels: items.map(orderLineLabel),
+  });
+  const lines =
+    items.length === 0 && classified.type === "playlist"
+      ? [{ slug: "", size: "", quantity: 1, label: classified.typeLabel }]
+      : items;
+  const submission = orderDetails({
+    type: classified.type,
+    metadata,
+    customFields: session.custom_fields,
+  });
   const shipping = session.collected_information?.shipping_details;
   const shippingAddress = shipping
     ? addressLines(shipping.name, shipping.address)
@@ -220,15 +275,20 @@ function toOrder(session: Stripe.Checkout.Session, items: OrderLine[], livemode:
     id: session.id,
     created: session.created,
     customerName: shipping?.name || session.customer_details?.name || "",
-    customerEmail: session.customer_details?.email || "",
-    items,
-    itemSummary: items.map(orderLineLabel).join(", "),
+    customerEmail: session.customer_details?.email || metadata.email || "",
+    items: lines,
+    itemSummary: lines.map(orderLineLabel).join(", "),
     shippingAddress,
     shippingRate: shippingRateLabel(session),
     totalCents: session.amount_total ?? 0,
+    type: classified.type,
+    typeLabel: classified.typeLabel,
+    artistName: submission.artistName,
+    trackUrl: submission.trackUrl,
+    details: submission.details,
     paymentIntentId: payment.paymentIntentId,
     refundedCents: payment.refundedCents,
-    shippoOrderId: session.metadata?.shippoOrderId?.trim() || null,
+    shippoOrderId: metadata.shippoOrderId?.trim() || null,
     dashboardUrl: stripeDashboardUrl(`/checkout/sessions/${session.id}`, livemode),
   };
 }
@@ -328,19 +388,15 @@ async function fetchStripe(stripe: Stripe): Promise<StripeSnapshot> {
     ),
   ]);
 
-  const paidSessions = sessions.rows.filter(
-    (session) =>
-      session.mode === "payment" &&
-      session.payment_status === "paid" &&
-      session.metadata?.kind !== "playlist",
-  );
+  const paidSessions = sessions.rows.filter((session) => session.payment_status === "paid");
   const extraItems = await lookupMissingItems(stripe, paidSessions);
   const orders = paidSessions
-    .map((session) => toOrder(session, extraItems.get(session.id) || linesFromSession(session), livemode))
+    .map((session) => toOrder(session, extraItems.items.get(session.id) || linesFromSession(session), livemode))
     .sort((a, b) => b.created - a.created);
 
   return {
     orders,
+    itemsIncomplete: extraItems.incomplete,
     subscriptionRevenue: invoices.rows.flatMap((invoice) => {
       const row = invoiceAmount(invoice);
       return row ? [row] : [];
@@ -462,11 +518,19 @@ function bestSubscription(subs: AdminSubscription[]): AdminSubscription | undefi
   return [...subs].sort((a, b) => (STATUS_RANK[b.status] ?? 0) - (STATUS_RANK[a.status] ?? 0))[0];
 }
 
+function emptyBucket(): RevenueBucket {
+  return { merch: 0, featureVerse: 0, playlist: 0, subscriptions: 0 };
+}
+
 function emptyRevenue(): AdminData["revenue"] {
-  return {
-    month: { merch: 0, subscriptions: 0 },
-    allTime: { merch: 0, subscriptions: 0 },
-  };
+  return { month: emptyBucket(), allTime: emptyBucket() };
+}
+
+function addCheckoutRevenue(revenue: AdminData["revenue"], order: { type: OrderType; created: number; totalCents: number }, start: number) {
+  const field = order.type === "merch" ? "merch" : order.type === "feature-verse" ? "featureVerse" : order.type === "playlist" ? "playlist" : null;
+  if (!field) return;
+  revenue.allTime[field] += order.totalCents;
+  if (order.created >= start) revenue.month[field] += order.totalCents;
 }
 
 export async function getAdminData(): Promise<AdminData> {
@@ -516,12 +580,20 @@ export async function getAdminData(): Promise<AdminData> {
     };
   });
 
+  const orders: AdminOrder[] = (snapshot?.orders ?? []).map((order) => {
+    const flag = flags.get(order.id);
+    return {
+      ...order,
+      fulfilled: flag?.fulfilled ?? false,
+      archived: flag?.archived ?? false,
+      refundedCents: Math.max(order.refundedCents, flag?.refundedCents ?? 0),
+      shippoOrderId: flag?.shippoOrderId || order.shippoOrderId,
+    };
+  });
+
   const start = monthStartUnix();
   const revenue = emptyRevenue();
-  for (const order of snapshot?.orders ?? []) {
-    revenue.allTime.merch += order.totalCents;
-    if (order.created >= start) revenue.month.merch += order.totalCents;
-  }
+  for (const order of orders) addCheckoutRevenue(revenue, order, start);
   for (const invoice of snapshot?.subscriptionRevenue ?? []) {
     revenue.allTime.subscriptions += invoice.amount;
     if (invoice.created >= start) revenue.month.subscriptions += invoice.amount;
@@ -566,6 +638,7 @@ export async function getAdminData(): Promise<AdminData> {
     stripeError,
     databaseError,
     truncated: snapshot?.truncated ?? false,
+    itemsIncomplete: snapshot?.itemsIncomplete ?? false,
     cachedAt: stripeCache?.expires ? stripeCache.expires - CACHE_MS : null,
     revenue,
     tiers,
@@ -573,16 +646,8 @@ export async function getAdminData(): Promise<AdminData> {
     pastDue,
     signups30d: users.signups30d,
     recentSignups,
-    orders: (snapshot?.orders ?? []).map((order) => {
-      const flag = flags.get(order.id);
-      return {
-        ...order,
-        fulfilled: flag?.fulfilled ?? false,
-        archived: flag?.archived ?? false,
-        refundedCents: Math.max(order.refundedCents, flag?.refundedCents ?? 0),
-        shippoOrderId: flag?.shippoOrderId || order.shippoOrderId,
-      };
-    }),
+    orders,
+    customers: groupCustomers(orders),
     members,
     subscriptions,
   };
