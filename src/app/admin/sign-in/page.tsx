@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import AdminSignInForm from "@/components/admin/AdminSignInForm";
-import { isAdminEmail, safeAdminPath } from "@/lib/admin-allowlist";
+import { adminGate } from "@/lib/admin";
+import { safeAdminPath } from "@/lib/admin-allowlist";
 import { adminMagicLinkConfigured } from "@/lib/admin-email";
 import { accountsConfigured } from "@/lib/auth";
-import { currentMember } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +20,8 @@ export default async function AdminSignInPage({
 }) {
   const params = await searchParams;
   const nextPath = safeAdminPath(params.next);
-  const member = await currentMember();
-  if (member && isAdminEmail(member.email)) redirect(nextPath);
+  const gate = await adminGate();
+  if (gate.ok) redirect(nextPath);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
@@ -32,6 +32,9 @@ export default async function AdminSignInPage({
       </p>
       {params.error === "link" && (
         <p className="mb-6 text-sm text-hero-accent">That sign-in link is invalid or expired. Request a new one.</p>
+      )}
+      {params.error === "expired" && (
+        <p className="mb-6 text-sm text-hero-accent">That admin session expired. Sign in again.</p>
       )}
       {!accountsConfigured() ? (
         <p className="text-sm text-hero-accent">Accounts are not configured. Set DATABASE_URL and BETTER_AUTH_SECRET.</p>

@@ -16,8 +16,9 @@ async function persistSubmission(
   type: string,
   payload: Record<string, string>
 ): Promise<void> {
-  // MVP: log server-side. Swap for Formspree / DB / email later.
-  console.log(`[#Hero form:${type}]`, JSON.stringify(payload));
+  // MVP: log the form type only. Do not log names, emails, or messages.
+  console.log(`[#Hero form:${type}] received`);
+  void payload;
   // Simulate async persistence
   await Promise.resolve();
 }

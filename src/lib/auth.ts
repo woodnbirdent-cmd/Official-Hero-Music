@@ -5,6 +5,11 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { Pool } from "pg";
 import { isAdminEmail } from "@/lib/admin-allowlist";
 import { sendAdminMagicLinkEmail } from "@/lib/admin-email";
+import {
+  ADMIN_MAGIC_LINK_SECONDS,
+  adminSignInRateLimits,
+  isAdminCallback,
+} from "@/lib/admin-security";
 
 const pool = process.env.DATABASE_URL
   ? new Pool({
@@ -39,6 +44,12 @@ export const auth = betterAuth({
       },
   advanced: {
     trustedProxyHeaders: true,
+    useSecureCookies: process.env.NODE_ENV === "production",
+    defaultCookieAttributes: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
   },
   ...(pool ? { database: pool } : {}),
   emailAndPassword: {
@@ -62,6 +73,8 @@ export const auth = betterAuth({
     },
   },
   session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
     cookieCache: {
       enabled: true,
       maxAge: 60,
@@ -72,6 +85,7 @@ export const auth = betterAuth({
     storage: "database",
     window: 60,
     max: 30,
+    customRules: adminSignInRateLimits(),
   },
   trustedOrigins: [
     "https://officialheromusic.com",
@@ -87,34 +101,44 @@ export const auth = betterAuth({
           return { data: { tier: "free" } };
         },
       },
+      update: {
+        before: async (user) => {
+          if (typeof user.email === "string" && isAdminEmail(user.email)) return false;
+        },
+      },
     },
   },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       const email = typeof ctx.body?.email === "string" ? ctx.body.email : "";
-      if (ctx.path === "/sign-in/magic-link" && !isAdminEmail(email)) {
-        throw new APIError("FORBIDDEN", { message: "You do not have access to the admin area." });
-      }
       if (ctx.path === "/sign-up/email" && isAdminEmail(email)) {
-        throw new APIError("BAD_REQUEST", {
-          message: "This email uses the private admin sign-in.",
-        });
+        throw new APIError("BAD_REQUEST", { message: "User already exists." });
+      }
+      if (ctx.path === "/magic-link/verify") {
+        const callback = typeof ctx.query?.callbackURL === "string" ? ctx.query.callbackURL : "";
+        if (!isAdminCallback(callback)) {
+          throw new APIError("BAD_REQUEST", { message: "Invalid sign-in link." });
+        }
+      }
+      if (ctx.path === "/sign-in/magic-link" && ctx.body && typeof ctx.body === "object") {
+        ctx.body.callbackURL = "/admin";
+        ctx.body.errorCallbackURL = "/admin/sign-in?error=link";
+        ctx.body.newUserCallbackURL = "/admin";
       }
     }),
   },
   plugins: [
     magicLink({
-      expiresIn: 60 * 5,
+      expiresIn: ADMIN_MAGIC_LINK_SECONDS,
       disableSignUp: false,
+      storeToken: "hashed",
+      rateLimit: adminSignInRateLimits()["/sign-in/magic-link"],
       sendMagicLink: async ({ email, url }) => {
-        if (!isAdminEmail(email)) {
-          throw new APIError("FORBIDDEN", { message: "You do not have access to the admin area." });
-        }
+        if (!isAdminEmail(email)) return;
         try {
           await sendAdminMagicLinkEmail(email, url);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Could not send the sign-in email.";
-          throw new APIError("SERVICE_UNAVAILABLE", { message });
+        } catch {
+          console.error("Admin sign-in email failed");
         }
       },
     }),

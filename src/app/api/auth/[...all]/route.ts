@@ -15,8 +15,8 @@ async function ready(request: Request) {
   if (!accountsConfigured()) return unconfigured();
   try {
     await ensureSchema();
-  } catch (error) {
-    console.error("Account schema setup failed", error);
+  } catch {
+    console.error("Account schema setup failed");
     return NextResponse.json({ error: "Accounts are not ready." }, { status: 503 });
   }
   return request;

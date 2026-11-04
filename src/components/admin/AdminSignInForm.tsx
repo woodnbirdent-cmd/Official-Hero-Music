@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { adminEmailAllowed, sendAdminMagicLink } from "@/app/admin/sign-in/actions";
-import { authClient } from "@/lib/auth-client";
+import { sendAdminMagicLink, signInAdmin } from "@/app/admin/sign-in/actions";
+import { GENERIC_LINK_MESSAGE, GENERIC_SIGN_IN_ERROR } from "@/lib/admin-security";
 
 export default function AdminSignInForm({
   nextPath,
@@ -16,26 +16,22 @@ export default function AdminSignInForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState("");
   const [pending, setPending] = useState<"link" | "password" | null>(null);
 
   async function onMagicLink() {
     setError("");
-    setSent(false);
+    setSent("");
     if (!email.trim()) {
-      setError("Enter the admin email.");
+      setError("Enter an email address.");
       return;
     }
     setPending("link");
     try {
       const result = await sendAdminMagicLink(email);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setSent(true);
+      setSent(result.ok ? result.message || GENERIC_LINK_MESSAGE : GENERIC_LINK_MESSAGE);
     } catch {
-      setError("Could not send the sign-in email.");
+      setSent(GENERIC_LINK_MESSAGE);
     } finally {
       setPending(null);
     }
@@ -44,26 +40,18 @@ export default function AdminSignInForm({
   async function onPassword(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setSent(false);
+    setSent("");
     setPending("password");
     try {
-      const allowed = await adminEmailAllowed(email);
-      if (!allowed.ok) {
-        setError(allowed.error);
-        return;
-      }
-      const result = await authClient.signIn.email({
-        email: email.trim(),
-        password,
-      });
-      if (result.error) {
-        setError(result.error.message || "Could not sign in.");
+      const result = await signInAdmin(email, password);
+      if (!result.ok) {
+        setError(GENERIC_SIGN_IN_ERROR);
         return;
       }
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError("Could not sign in.");
+      setError(GENERIC_SIGN_IN_ERROR);
     } finally {
       setPending(null);
     }
@@ -88,7 +76,7 @@ export default function AdminSignInForm({
           <button type="button" className="btn-primary w-full" disabled={pending !== null} onClick={() => void onMagicLink()}>
             {pending === "link" ? "Sending…" : "Email me a sign-in link"}
           </button>
-          {sent && <p className="text-sm text-hero-light">Check that inbox for a sign-in link. It expires in 5 minutes.</p>}
+          {sent && <p className="text-sm text-hero-light">{sent}</p>}
         </div>
       ) : (
         <p className="text-sm text-hero-light">
@@ -104,6 +92,8 @@ export default function AdminSignInForm({
             type="password"
             required
             autoComplete="current-password"
+            minLength={8}
+            maxLength={128}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="input-field"

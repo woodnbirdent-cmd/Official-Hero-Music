@@ -1,41 +1,50 @@
 "use server";
 
 import { headers } from "next/headers";
-import { isAPIError } from "better-auth/api";
+import { assertSameOrigin } from "@/lib/admin";
 import { isAdminEmail } from "@/lib/admin-allowlist";
 import { accountsConfigured, auth } from "@/lib/auth";
-import { adminMagicLinkConfigured } from "@/lib/admin-email";
+import { GENERIC_LINK_MESSAGE, GENERIC_SIGN_IN_ERROR } from "@/lib/admin-security";
 
-export type SignInResult = { ok: true } | { ok: false; error: string };
-
-const DENIED = "You do not have access to the admin area.";
-
-export async function adminEmailAllowed(email: string): Promise<SignInResult> {
-  if (!isAdminEmail(email)) return { ok: false, error: DENIED };
-  return { ok: true };
-}
+export type SignInResult = { ok: true; message?: string } | { ok: false; error: string };
 
 export async function sendAdminMagicLink(email: string): Promise<SignInResult> {
+  if (!(await assertSameOrigin())) return { ok: true, message: GENERIC_LINK_MESSAGE };
+  if (!accountsConfigured()) return { ok: true, message: GENERIC_LINK_MESSAGE };
   const normalized = email.trim().toLowerCase();
-  if (!isAdminEmail(normalized)) return { ok: false, error: DENIED };
-  if (!accountsConfigured()) return { ok: false, error: "Accounts are not configured." };
-  if (!adminMagicLinkConfigured()) return { ok: false, error: "Email sign-in is not configured." };
-
+  if (!normalized.includes("@")) return { ok: true, message: GENERIC_LINK_MESSAGE };
   try {
     await auth.api.signInMagicLink({
       body: {
         email: normalized,
         callbackURL: "/admin",
         errorCallbackURL: "/admin/sign-in?error=link",
+        newUserCallbackURL: "/admin",
       },
       headers: await headers(),
     });
-    return { ok: true };
-  } catch (error) {
+  } catch {
     console.error("Admin magic link request failed");
-    if (isAPIError(error)) {
-      return { ok: false, error: error.message || "Could not send the sign-in email." };
+  }
+  return { ok: true, message: GENERIC_LINK_MESSAGE };
+}
+
+export async function signInAdmin(email: string, password: string): Promise<SignInResult> {
+  if (!(await assertSameOrigin()) || !accountsConfigured()) {
+    return { ok: false, error: GENERIC_SIGN_IN_ERROR };
+  }
+  try {
+    const result = await auth.api.signInEmail({
+      body: { email: email.trim().toLowerCase(), password },
+      headers: await headers(),
+    });
+    const signedInEmail = result?.user?.email;
+    if (!isAdminEmail(signedInEmail)) {
+      await auth.api.signOut({ headers: await headers() });
+      return { ok: false, error: GENERIC_SIGN_IN_ERROR };
     }
-    return { ok: false, error: "Could not send the sign-in email." };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: GENERIC_SIGN_IN_ERROR };
   }
 }

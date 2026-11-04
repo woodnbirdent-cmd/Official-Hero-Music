@@ -44,8 +44,8 @@ export async function getSessionUser(): Promise<{ id: string; email: string; nam
       email: session.user.email,
       name: session.user.name || "",
     };
-  } catch (error) {
-    console.error("Session lookup failed", error);
+  } catch {
+    console.error("Session lookup failed");
     return null;
   }
 }

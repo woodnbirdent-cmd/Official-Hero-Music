@@ -39,7 +39,7 @@ See `.env.example`:
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
-`/admin` is limited to `ADMIN_EMAILS`. Sign in at `/admin/sign-in` with an email magic link (Resend) or the password on an allowlisted account that already exists. New sign-ups cannot claim an admin email. The orders and customers pages read paid Stripe Checkout sessions (cached about a minute): merch, feature-verse Payment Links, and playlist submissions. Times are America/Chicago. Those pages do not refund or edit Stripe. Merch fulfilled and archived flags are saved in Postgres. A paid merch checkout creates a Shippo order so the label can be bought in the Shippo dashboard. `/admin` sends `noindex` and is omitted from `robots.txt` and the sitemap.
+`/admin` is limited to `ADMIN_EMAILS`, checked on the server against the database email for every admin page, export, and action. Sign in at `/admin/sign-in`. Magic links expire in 5 minutes, are single-use, and are stored hashed. Password sign-in uses the same generic error for every failure. Admin sessions must be newer than 8 hours. Canceling a Stripe subscription or deleting a Stripe customer requires a sign-in from the last 15 minutes plus a typed confirmation, and neither happens unless that confirmation is present. `/admin` sends `noindex`, `no-store`, and is omitted from `robots.txt` and the sitemap.
 
 The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, and `checkout.session.completed`.
 

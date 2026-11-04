@@ -1,6 +1,13 @@
 import "server-only";
 import Stripe from "stripe";
-import { requireAdmin } from "@/lib/admin";
+import { adminGate, requireAdmin } from "@/lib/admin";
+import {
+  ADMIN_REAUTH_SECONDS,
+  CANCEL_SUBSCRIPTION_PHRASE,
+  DELETE_CUSTOMER_PHRASE,
+  phraseMatches,
+  sessionIsFresh,
+} from "@/lib/admin-security";
 import { clearAdminStripeCache } from "@/lib/admin-data";
 import { ensureAdminTables, writeActivity } from "@/lib/admin-store";
 import { getPool } from "@/lib/auth";
@@ -15,14 +22,8 @@ function stripeClient(): Stripe | null {
   return new Stripe(secret);
 }
 
-function stripeError(error: unknown): string {
-  if (error && typeof error === "object" && "code" in error && error.code === "resource_missing") {
-    return "missing";
-  }
-  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
-    return error.message.slice(0, 300);
-  }
-  return "Stripe request failed.";
+function stripeMissing(error: unknown): boolean {
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "resource_missing");
 }
 
 async function cancelSubscriptions(stripe: Stripe, customerId: string): Promise<string[]> {
@@ -49,9 +50,16 @@ async function cancelSubscriptions(stripe: Stripe, customerId: string): Promise<
 export async function deleteMemberAccount(input: {
   userId: string;
   confirmEmail: string;
+  cancelSubscription: boolean;
+  cancelPhrase: string;
   deleteStripeCustomer: boolean;
+  deleteCustomerPhrase: string;
 }): Promise<ActionResult> {
-  const admin = await requireAdmin();
+  const gate = await adminGate();
+  if (!gate.ok || !sessionIsFresh(gate.sessionCreatedAt, ADMIN_REAUTH_SECONDS)) {
+    return { ok: false, error: "Sign in again before changing a member or a Stripe subscription." };
+  }
+  const admin = gate.member;
   if (!USER_ID.test(input.userId)) return { ok: false, error: "Unknown member." };
 
   const pool = getPool();
@@ -73,36 +81,43 @@ export async function deleteMemberAccount(input: {
     return { ok: false, error: "You can't delete your own admin account." };
   }
 
-  const stripe = stripeClient();
-  if (member.stripeCustomerId && !stripe) {
-    return { ok: false, error: "Stripe is not configured, so this member's subscription cannot be canceled." };
+  const wantsCancel = input.cancelSubscription;
+  if (wantsCancel && !phraseMatches(input.cancelPhrase, CANCEL_SUBSCRIPTION_PHRASE)) {
+    return { ok: false, error: "Type CANCEL SUBSCRIPTION to cancel the Stripe subscription." };
+  }
+  const wantsDeleteCustomer = input.deleteStripeCustomer;
+  if (wantsDeleteCustomer && !phraseMatches(input.deleteCustomerPhrase, DELETE_CUSTOMER_PHRASE)) {
+    return { ok: false, error: "Type DELETE STRIPE CUSTOMER to delete the Stripe customer." };
+  }
+
+  const stripe = wantsCancel || wantsDeleteCustomer ? stripeClient() : null;
+  if ((wantsCancel || wantsDeleteCustomer) && member.stripeCustomerId && !stripe) {
+    return { ok: false, error: "Stripe is not configured, so this member's subscription was left unchanged." };
   }
 
   let canceled: string[] = [];
   let customerDeleted = false;
-  if (stripe && member.stripeCustomerId) {
+  if (stripe && member.stripeCustomerId && wantsCancel) {
     try {
       canceled = await cancelSubscriptions(stripe, member.stripeCustomerId);
     } catch (error) {
-      console.error("Subscription cancel failed", error);
-      const message = stripeError(error);
-      return { ok: false, error: message === "missing" ? "Stripe customer was not found." : message };
+      console.error("Subscription cancel failed", stripeMissing(error) ? "missing" : "stripe_error");
+      return {
+        ok: false,
+        error: stripeMissing(error) ? "Stripe customer was not found." : "Stripe could not cancel the subscription.",
+      };
     }
-    if (input.deleteStripeCustomer) {
-      try {
-        await stripe.customers.del(member.stripeCustomerId);
-        customerDeleted = true;
-      } catch (error) {
-        const message = stripeError(error);
-        if (message !== "missing") {
-          console.error("Stripe customer delete failed", error);
-          return {
-            ok: false,
-            error: `Subscriptions were canceled, but the Stripe customer was not deleted. ${message}`,
-          };
-        }
-        customerDeleted = true;
+  }
+  if (stripe && member.stripeCustomerId && wantsDeleteCustomer) {
+    try {
+      await stripe.customers.del(member.stripeCustomerId);
+      customerDeleted = true;
+    } catch (error) {
+      if (!stripeMissing(error)) {
+        console.error("Stripe customer delete failed", "stripe_error");
+        return { ok: false, error: "The Stripe customer was not deleted. The member account was not removed." };
       }
+      customerDeleted = true;
     }
   }
 
@@ -125,7 +140,7 @@ export async function deleteMemberAccount(input: {
     if (error && typeof error === "object" && "digest" in error && String(error.digest).startsWith("NEXT_")) {
       throw error;
     }
-    console.error("Member delete failed", error);
+    console.error("Member delete failed");
     return { ok: false, error: "The account could not be deleted." };
   } finally {
     client.release();

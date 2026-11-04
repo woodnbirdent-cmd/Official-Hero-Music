@@ -216,8 +216,8 @@ async function lookupMissingItems(
             label: item.description || "Item",
           })),
         );
-      } catch (error) {
-        console.error("Line item lookup failed", session.id, error);
+      } catch {
+        console.error("Line item lookup failed");
       }
     }
   }
@@ -356,8 +356,8 @@ async function listSessions(stripe: Stripe): Promise<{ rows: Stripe.Checkout.Ses
         expand: ["data.shipping_cost.shipping_rate", "data.payment_intent.latest_charge"],
       }),
     );
-  } catch (error) {
-    console.error("Checkout list with shipping expand failed", error);
+  } catch {
+    console.error("Checkout list with shipping expand failed");
     return paginate((startingAfter) =>
       stripe.checkout.sessions.list({
         ...params,
@@ -536,8 +536,8 @@ function addCheckoutRevenue(revenue: AdminData["revenue"], order: { type: OrderT
 export async function getAdminData(): Promise<AdminData> {
   await requireAdmin();
   let databaseError: string | null = null;
-  const users = await loadUsers().catch((error: unknown) => {
-    console.error("Admin member query failed", error);
+  const users = await loadUsers().catch(() => {
+    console.error("Admin member query failed");
     databaseError = "Member data could not be loaded.";
     return { rows: [] as UserRow[], free: 0, signups30d: 0 };
   });
@@ -546,16 +546,16 @@ export async function getAdminData(): Promise<AdminData> {
   let stripeError: string | null = null;
   try {
     snapshot = await stripeSnapshot();
-  } catch (error) {
-    console.error("Admin Stripe load failed", error);
+  } catch {
+    console.error("Admin Stripe load failed");
     stripeError = "Stripe data could not be loaded.";
   }
 
   let flags = new Map<string, OrderFlag>();
   try {
     flags = await orderFlags();
-  } catch (error) {
-    console.error("Order flag lookup failed", error);
+  } catch {
+    console.error("Order flag lookup failed");
   }
 
   const byCustomer = new Map<string, AdminSubscription[]>();

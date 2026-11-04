@@ -86,16 +86,7 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed" && event.data.object.mode === "payment") {
     const session = event.data.object;
     if (session.metadata?.kind === "playlist") {
-      console.log(
-        "[#Hero form:playlist]",
-        JSON.stringify({
-          sessionId: session.id,
-          option: session.metadata.option,
-          artistName: session.metadata.artistName,
-          email: session.metadata.email,
-          trackUrl: session.metadata.trackUrl,
-        }),
-      );
+      console.log("[#Hero form:playlist] checkout completed");
     } else {
       await syncMerchShippoOrder(stripe, session.id);
     }
