@@ -22,6 +22,18 @@ export default function TourPage() {
           drop.
         </p>
 
+        <section className="mb-10 border border-hero-surface bg-hero-dark p-6">
+          <p className="section-label mb-2">Next show</p>
+          <h2 className="section-heading text-4xl">SET APART</h2>
+          <p className="mt-3 text-sm text-hero-light">
+            Saturday, January 9, 2027 · 4–8 PM · Building Community Bridges, Jefferson City, MO
+          </p>
+          <p className="mt-2 text-sm text-hero-muted">Official Hero Music & WNB Lighting and Sound present.</p>
+          <Link href="/tickets" className="btn-primary mt-5">
+            Tickets
+          </Link>
+        </section>
+
         <div className="mb-12 flex flex-wrap gap-3">
           <a
             href={BANDSINTOWN.shortUrl}
@@ -64,12 +76,11 @@ export default function TourPage() {
             <div className="mt-6 border border-hero-surface bg-hero-dark p-6">
               <p className="section-label mb-3">Empty calendar</p>
               <h3 className="mb-3 text-xl font-black uppercase tracking-tight text-hero-accent">
-                Dates drop here
+                More dates drop here
               </h3>
               <p className="mb-6 max-w-xl text-sm leading-relaxed text-hero-light">
-                No shows on the books is still a premium lane. Track {SITE.artist} on
-                Bandsintown for city requests and on-sale alerts, or join the mailing list
-                for a direct notify.
+                SET APART is on sale on this site. Other cities still land on Bandsintown,
+                or join the mailing list for a direct notify.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/join" className="btn-primary">
