@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins/magic-link";
+import { twoFactor } from "better-auth/plugins/two-factor";
 import { Pool } from "pg";
 import { isAdminEmail } from "@/lib/admin-allowlist";
 import { sendAdminMagicLinkEmail } from "@/lib/admin-email";
@@ -9,6 +10,7 @@ import {
   ADMIN_MAGIC_LINK_SECONDS,
   adminSignInRateLimits,
   isAdminCallback,
+  sessionEmailFromAuthContext,
 } from "@/lib/admin-security";
 
 const pool = process.env.DATABASE_URL
@@ -102,8 +104,9 @@ export const auth = betterAuth({
         },
       },
       update: {
-        before: async (user) => {
+        before: async (user, context) => {
           if (typeof user.email === "string" && isAdminEmail(user.email)) return false;
+          if (user.twoFactorEnabled === true && !isAdminEmail(sessionEmailFromAuthContext(context))) return false;
         },
       },
     },
@@ -128,6 +131,12 @@ export const auth = betterAuth({
     }),
   },
   plugins: [
+    twoFactor({
+      issuer: "Official Hero Music",
+      allowPasswordless: true,
+      backupCodeOptions: { storeBackupCodes: "encrypted" },
+      totpOptions: { digits: 6, period: 30 },
+    }),
     magicLink({
       expiresIn: ADMIN_MAGIC_LINK_SECONDS,
       disableSignUp: false,

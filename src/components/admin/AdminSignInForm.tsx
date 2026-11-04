@@ -48,7 +48,7 @@ export default function AdminSignInForm({
         setError(GENERIC_SIGN_IN_ERROR);
         return;
       }
-      router.push(nextPath);
+      router.push(result.step === "totp" ? "/admin/sign-in/totp" : nextPath);
       router.refresh();
     } catch {
       setError(GENERIC_SIGN_IN_ERROR);

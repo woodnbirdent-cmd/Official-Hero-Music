@@ -38,6 +38,14 @@ export function sessionIsFresh(createdAt: Date | string | number, maxAgeSeconds:
   return age !== null && age >= 0 && age <= maxAgeSeconds;
 }
 
+/** Reads the signed-in email from a Better Auth database-hook context, when one is present. */
+export function sessionEmailFromAuthContext(context: unknown): string | undefined {
+  if (!context || typeof context !== "object" || !("context" in context)) return undefined;
+  const inner = (context as { context?: { session?: { user?: { email?: string } } | null } }).context;
+  const email = inner?.session?.user?.email;
+  return typeof email === "string" ? email : undefined;
+}
+
 export function phraseMatches(value: string | null | undefined, phrase: string): boolean {
   return (value || "").trim() === phrase;
 }
@@ -72,7 +80,15 @@ export function isAdminCallback(value: string | null | undefined): boolean {
   return path === "/admin" || path.startsWith("/admin/");
 }
 
-export function adminSecurityHeaders(https: boolean): [string, string][] {
+const NONCE_PATTERN = /^[A-Za-z0-9+/_-]+={0,2}$/;
+
+/** Nonce-based script policy. Next.js reads this nonce from the request CSP and applies it while hydrating. */
+export function adminScriptSrc(nonce: string): string {
+  if (!NONCE_PATTERN.test(nonce)) throw new Error("Invalid CSP nonce.");
+  return `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+}
+
+export function adminSecurityHeaders(https: boolean, nonce: string): [string, string][] {
   const csp = [
     "default-src 'self'",
     "base-uri 'self'",
@@ -80,7 +96,7 @@ export function adminSecurityHeaders(https: boolean): [string, string][] {
     "frame-ancestors 'none'",
     "frame-src 'none'",
     "object-src 'none'",
-    "script-src 'self' 'unsafe-inline'",
+    adminScriptSrc(nonce),
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",

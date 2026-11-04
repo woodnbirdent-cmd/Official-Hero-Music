@@ -73,16 +73,23 @@ test("callbacks and origins stay on this admin site", () => {
   assert.equal(sameOrigin(null, "officialheromusic.com"), false);
 });
 
-test("admin responses set the security headers", () => {
-  const headers = new Map(adminSecurityHeaders(true));
-  assert.match(headers.get("Content-Security-Policy") || "", /frame-ancestors 'none'/);
-  assert.match(headers.get("Content-Security-Policy") || "", /default-src 'self'/);
+test("admin responses set a nonce script policy", () => {
+  const nonce = "Aa1+Bb2/Cc3=";
+  const headers = new Map(adminSecurityHeaders(true, nonce));
+  const csp = headers.get("Content-Security-Policy") || "";
+  assert.match(csp, /frame-ancestors 'none'/);
+  assert.match(csp, /default-src 'self'/);
+  assert.ok(csp.includes(`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`));
+  assert.equal(csp.includes("'unsafe-inline' 'strict-dynamic'"), false);
+  assert.equal(/script-src [^;]*'unsafe-inline'/.test(csp), false);
+  assert.match(csp, /style-src 'self' 'unsafe-inline'/);
   assert.equal(headers.get("X-Content-Type-Options"), "nosniff");
   assert.equal(headers.get("Referrer-Policy"), "no-referrer");
   assert.equal(headers.get("X-Frame-Options"), "DENY");
   assert.match(headers.get("Strict-Transport-Security") || "", /max-age=63072000/);
   assert.match(headers.get("Cache-Control") || "", /no-store/);
-  assert.equal(new Map(adminSecurityHeaders(false)).has("Strict-Transport-Security"), false);
+  assert.equal(new Map(adminSecurityHeaders(false, nonce)).has("Strict-Transport-Security"), false);
+  assert.throws(() => adminSecurityHeaders(true, "bad nonce"));
 });
 
 test("admin routes and actions authorize on the server", () => {
@@ -107,4 +114,9 @@ test("admin routes and actions authorize on the server", () => {
   assert.match(auth, /storeToken: "hashed"/);
   assert.match(auth, /httpOnly: true/);
   assert.match(auth, /sameSite: "lax"/);
+  assert.match(auth, /allowPasswordless: true/);
+  assert.match(auth, /storeBackupCodes: "encrypted"/);
+  const publicSignIn = readFileSync(join(root, "src/components/auth/CredentialsForm.tsx"), "utf8");
+  assert.equal(publicSignIn.includes("twoFactor"), false);
+  assert.equal(publicSignIn.includes("two-factor"), false);
 });

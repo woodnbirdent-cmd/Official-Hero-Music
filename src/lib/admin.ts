@@ -1,7 +1,8 @@
 import "server-only";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { isAdminEmail, safeAdminPath } from "@/lib/admin-allowlist";
+import { openAdminMfa, sealAdminMfa } from "@/lib/admin-mfa";
 import { accountsConfigured, auth, getPool } from "@/lib/auth";
 import { ensureSchema, type Member } from "@/lib/members";
 import { isTier } from "@/lib/tiers";
@@ -16,7 +17,28 @@ export { adminEmails, isAdminEmail } from "@/lib/admin-allowlist";
 
 export type AdminGate =
   | { ok: true; member: Member; sessionCreatedAt: Date }
-  | { ok: false; reason: "anonymous" | "forbidden" | "stale" };
+  | { ok: false; reason: "anonymous" | "forbidden" | "stale" | "needs-enroll" | "needs-totp" };
+
+const MFA_COOKIE = "admin_totp";
+
+async function mfaMatches(sessionId: string): Promise<boolean> {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  const token = (await cookies()).get(MFA_COOKIE)?.value;
+  if (!secret || !token) return false;
+  return (await openAdminMfa(token, secret)) === sessionId;
+}
+
+export async function setAdminMfaCookie(sessionId: string): Promise<void> {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret) return;
+  (await cookies()).set(MFA_COOKIE, await sealAdminMfa(sessionId, secret), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/admin",
+    maxAge: ADMIN_SESSION_SECONDS,
+  });
+}
 
 export async function adminGate(): Promise<AdminGate> {
   if (!accountsConfigured()) return { ok: false, reason: "anonymous" };
@@ -37,12 +59,28 @@ export async function adminGate(): Promise<AdminGate> {
 
   const pool = getPool();
   if (!pool) return { ok: false, reason: "anonymous" };
-  const result = await pool.query<{
+  let result: { rows: Array<{
     tier: string;
     email: string;
     name: string;
     stripeCustomerId: string | null;
-  }>(`SELECT tier, email, name, "stripeCustomerId" FROM "user" WHERE id = $1`, [session.user.id]);
+    twoFactorEnabled: boolean | null;
+  }> };
+  try {
+    result = await pool.query<{
+    tier: string;
+    email: string;
+    name: string;
+    stripeCustomerId: string | null;
+    twoFactorEnabled: boolean | null;
+  }>(
+    `SELECT tier, email, name, "stripeCustomerId", "twoFactorEnabled" FROM "user" WHERE id = $1`,
+    [session.user.id],
+    );
+  } catch {
+    console.error("Admin user lookup failed");
+    return { ok: false, reason: "anonymous" };
+  }
   const row = result.rows[0];
   if (!row?.email) return { ok: false, reason: "anonymous" };
 
@@ -54,6 +92,8 @@ export async function adminGate(): Promise<AdminGate> {
   if (!sessionIsFresh(createdAt, ADMIN_SESSION_SECONDS)) {
     return { ok: false, reason: "stale" };
   }
+  if (row.twoFactorEnabled !== true) return { ok: false, reason: "needs-enroll" };
+  if (!(await mfaMatches(session.session.id))) return { ok: false, reason: "needs-totp" };
   return {
     ok: true,
     sessionCreatedAt: createdAt,
@@ -72,6 +112,8 @@ export async function requireAdmin(): Promise<Member> {
   const gate = await adminGate();
   if (!gate.ok) {
     if (gate.reason === "forbidden") notFound();
+    if (gate.reason === "needs-enroll") redirect("/admin/sign-in/setup");
+    if (gate.reason === "needs-totp") redirect("/admin/sign-in/totp");
     const path = safeAdminPath((await headers()).get("x-pathname"));
     const error = gate.reason === "stale" ? "expired" : "";
     const params = new URLSearchParams({ next: path });
