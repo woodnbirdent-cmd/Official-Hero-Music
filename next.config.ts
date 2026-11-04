@@ -30,6 +30,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/checkin",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/checkin/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/api/auth/:path*",
         headers: [
           { key: "Referrer-Policy", value: "no-referrer" },
