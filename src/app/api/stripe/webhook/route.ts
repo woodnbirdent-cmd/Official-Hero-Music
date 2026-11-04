@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { accountsConfigured } from "@/lib/auth";
 import { setMemberTier } from "@/lib/members";
+import { fulfillPaidCheckout, releaseShowCheckout } from "@/lib/show-fulfill";
 import { syncMerchShippoOrder } from "@/lib/shippo-order";
 import { TIER_RANK, isTier, tierFromPriceCents, type Tier } from "@/lib/tiers";
 
@@ -83,12 +84,40 @@ export async function POST(request: Request) {
     }
   }
 
-  if (event.type === "checkout.session.completed" && event.data.object.mode === "payment") {
+  if (event.type === "checkout.session.expired") {
     const session = event.data.object;
-    if (session.metadata?.kind === "playlist") {
-      console.log("[#Hero form:playlist] checkout completed");
-    } else {
-      await syncMerchShippoOrder(stripe, session.id);
+    const kind = session.metadata?.kind;
+    if (kind === "ticket" || kind === "sponsorship") {
+      try {
+        await releaseShowCheckout(session);
+      } catch (error) {
+        console.error("Show hold release failed");
+        void error;
+        return NextResponse.json({ error: "Webhook failed." }, { status: 500 });
+      }
+    }
+  }
+
+  if (
+    (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") &&
+    event.data.object.mode === "payment"
+  ) {
+    const session = event.data.object;
+    const kind = session.metadata?.kind;
+    if (kind === "ticket" || kind === "sponsorship") {
+      try {
+        await fulfillPaidCheckout(session);
+      } catch (error) {
+        console.error("Show webhook failed");
+        void error;
+        return NextResponse.json({ error: "Webhook failed." }, { status: 500 });
+      }
+    } else if (event.type === "checkout.session.completed") {
+      if (kind === "playlist") {
+        console.log("[#Hero form:playlist] checkout completed");
+      } else {
+        await syncMerchShippoOrder(stripe, session.id);
+      }
     }
   }
 

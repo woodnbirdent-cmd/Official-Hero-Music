@@ -118,6 +118,7 @@ export const NAV_LINKS = [
   { href: "/playlist", label: "Playlist" },
   { href: "/reviews", label: "Reviews" },
   { href: "/tour", label: "Tour" },
+  { href: "/tickets", label: "Tickets" },
   { href: "/videos", label: "Videos" },
   { href: "/merch", label: "Merch" },
   { href: "/community", label: "Community" },

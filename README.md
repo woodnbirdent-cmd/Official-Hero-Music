@@ -34,14 +34,19 @@ See `.env.example`:
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 | `SHIPPO_API_TOKEN` | Live merch rates and paid-order sync. Already set in Vercel. VIP checkout skips live rates. |
 | `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Set to `woodnbirdent@gmail.com,hero@officialheromusic.com`. Everyone else is denied. |
-| `RESEND_API_KEY` | Sends admin magic-link sign-in email. |
-| `ADMIN_EMAIL_FROM` | From address for that email. The domain must be verified in Resend. |
+| `RESEND_API_KEY` | Sends admin magic-link sign-in email, ticket emails, and sponsorship receipts. |
+| `ADMIN_EMAIL_FROM` | From address for those emails. The domain must be verified in Resend. |
+| `TICKET_CAPACITY` | Whole number of SET APART tickets. Checkout stays closed until this is set. |
+| `TICKET_CHECKIN_PASSWORD` | Password for the door page at `/checkin`. |
+| `OWNER_NOTIFY_EMAIL` | Sponsorship notices. Defaults to `woodnbirdent@gmail.com` (Lee / Woodnbird). |
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
 `/admin` is limited to `ADMIN_EMAILS`, checked on the server against the database email for every admin page, export, and action. Sign in at `/admin/sign-in`. Magic links expire in 5 minutes, are single-use, and are stored hashed. Password sign-in uses the same generic error for every failure. Admin sessions must be newer than 8 hours. Canceling a Stripe subscription or deleting a Stripe customer requires a sign-in from the last 15 minutes plus a typed confirmation, and neither happens unless that confirmation is present. `/admin` sends `noindex`, `no-store`, and is omitted from `robots.txt` and the sitemap.
 
-The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, and `checkout.session.completed`.
+The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.expired`.
+
+SET APART tickets, check-in, and sponsorships use the same Neon Postgres database. Tables `show_orders` and `show_tickets` are created on first use. There is no separate ticketing vendor. Ticket tiers (name, price, perks, and whether a shirt size is collected) live in `src/lib/show-config.ts`. A paid Checkout is recorded only from the Stripe webhook, which emails one QR code per ticket through Resend. Volunteer sign-ups on the same page are free, stored in `show_orders`, and emailed to the volunteer and to Lee. `/checkin` redeems each code once and flags early access, meet & greet, and shirt size from the perks stored on that ticket. Business sponsorship names and prices in that config file are not final. Community Sponsor is the individual amount. Preview deploys need test Stripe keys (`sk_test_...`); show checkout refuses a live key when `VERCEL_ENV` is not `production`.
 
 Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Submissions are logged server-side in MVP (swap for Formspree/DB/email later).
 
