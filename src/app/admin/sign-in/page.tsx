@@ -22,6 +22,8 @@ export default async function AdminSignInPage({
   const nextPath = safeAdminPath(params.next);
   const gate = await adminGate();
   if (gate.ok) redirect(nextPath);
+  if (gate.reason === "needs-enroll") redirect("/admin/sign-in/setup");
+  if (gate.reason === "needs-totp") redirect("/admin/sign-in/totp");
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">

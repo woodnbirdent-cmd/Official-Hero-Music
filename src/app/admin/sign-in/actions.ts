@@ -6,7 +6,7 @@ import { isAdminEmail } from "@/lib/admin-allowlist";
 import { accountsConfigured, auth } from "@/lib/auth";
 import { GENERIC_LINK_MESSAGE, GENERIC_SIGN_IN_ERROR } from "@/lib/admin-security";
 
-export type SignInResult = { ok: true; message?: string } | { ok: false; error: string };
+export type SignInResult = { ok: true; message?: string; step?: "totp" } | { ok: false; error: string };
 
 export async function sendAdminMagicLink(email: string): Promise<SignInResult> {
   if (!(await assertSameOrigin())) return { ok: true, message: GENERIC_LINK_MESSAGE };
@@ -34,10 +34,14 @@ export async function signInAdmin(email: string, password: string): Promise<Sign
     return { ok: false, error: GENERIC_SIGN_IN_ERROR };
   }
   try {
+    const normalized = email.trim().toLowerCase();
     const result = await auth.api.signInEmail({
-      body: { email: email.trim().toLowerCase(), password },
+      body: { email: normalized, password },
       headers: await headers(),
     });
+    if (result && typeof result === "object" && "twoFactorRedirect" in result && result.twoFactorRedirect === true) {
+      return isAdminEmail(normalized) ? { ok: true, step: "totp" } : { ok: false, error: GENERIC_SIGN_IN_ERROR };
+    }
     const signedInEmail = result?.user?.email;
     if (!isAdminEmail(signedInEmail)) {
       await auth.api.signOut({ headers: await headers() });
