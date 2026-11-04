@@ -33,11 +33,13 @@ See `.env.example`:
 | `STRIPE_SECRET_KEY` | Stripe server key. Already set in Vercel. |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 | `SHIPPO_API_TOKEN` | Live merch rates and paid-order sync. Already set in Vercel. VIP checkout skips live rates. |
-| `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Everyone else gets a 404. |
+| `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Set to `woodnbirdent@gmail.com,hero@officialheromusic.com`. Everyone else is denied. |
+| `RESEND_API_KEY` | Sends admin magic-link sign-in email. |
+| `ADMIN_EMAIL_FROM` | From address for that email. The domain must be verified in Resend. |
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
-`/admin` is limited to `ADMIN_EMAILS`. It reads Stripe (cached about a minute) and the Neon user table. Merch checkout stores line items in the Checkout Session metadata. Fulfilled, archived, and refunded state is saved in Postgres. A paid merch checkout creates a Shippo order so the label can be bought in the Shippo dashboard. Paid Stripe payments are not deleted. Member deletes, refunds, and other admin actions are recorded on the Activity tab.
+`/admin` is limited to `ADMIN_EMAILS`, checked on the server against the database email for every admin page, export, and action. Sign in at `/admin/sign-in`. Magic links expire in 5 minutes, are single-use, and are stored hashed. Password sign-in uses the same generic error for every failure. Admin sessions must be newer than 8 hours. Canceling a Stripe subscription or deleting a Stripe customer requires a sign-in from the last 15 minutes plus a typed confirmation, and neither happens unless that confirmation is present. `/admin` sends `noindex`, `no-store`, and is omitted from `robots.txt` and the sitemap.
 
 The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, and `checkout.session.completed`.
 
