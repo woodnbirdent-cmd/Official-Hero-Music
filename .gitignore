@@ -34,5 +34,13 @@ yarn-error.log*
 .env
 .env*.local
 
+# Member audio stays in private Blob. Never commit it.
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.aac
+*.ogg
+
 # vercel
 .vercel
