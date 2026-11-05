@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin";
 import { PASSWORD_OPTIONAL_NOTICE } from "@/lib/admin-password-policy";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   await requireAdmin();

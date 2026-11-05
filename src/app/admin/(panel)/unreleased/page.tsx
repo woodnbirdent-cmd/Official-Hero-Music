@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BroadcastPanel from "@/components/admin/BroadcastPanel";
 import UnreleasedUploadForm from "@/components/admin/UnreleasedUploadForm";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/admin-csv";
@@ -6,6 +7,7 @@ import { privateAudioStatus, privateBlobConfigured } from "@/lib/private-audio";
 import { MAX_UNRELEASED_BYTES, UNRELEASED_TRACKS } from "@/lib/unreleased-tracks";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   await requireAdmin();
@@ -30,7 +32,7 @@ export default async function AdminUnreleasedPage() {
   const statuses = await Promise.all(UNRELEASED_TRACKS.map((track) => privateAudioStatus(track.pathname)));
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="section-heading text-3xl">Unreleased</h1>
         <p className="mt-2 text-sm text-hero-muted">
@@ -74,6 +76,7 @@ export default async function AdminUnreleasedPage() {
           />
         );
       })}
+      <BroadcastPanel heading="Notify by email" />
     </div>
   );
 }
