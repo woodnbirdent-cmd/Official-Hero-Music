@@ -53,9 +53,15 @@ export function unreleasedUploadTarget(trackId: string | null | undefined, pathn
 
 /**
  * Signed-out and unknown tiers are 401. Free is 403. Supporter and VIP are 200.
+ * A fresh ADMIN_EMAILS session is 200 at any tier. The route re-checks that
+ * allowlist on every request before passing admin: true.
  * Kept in lockstep with tierAtLeast(..., "supporter") by unreleased-tracks.test.ts.
  */
-export function streamAccessStatus(tier: string | null | undefined): 401 | 403 | 200 {
+export function streamAccessStatus(
+  tier: string | null | undefined,
+  options?: { admin?: boolean },
+): 401 | 403 | 200 {
+  if (options?.admin) return 200;
   if (!tier) return 401;
   if (tier === "free") return 403;
   if (STREAM_TIERS.has(tier)) return 200;
@@ -63,6 +69,33 @@ export function streamAccessStatus(tier: string | null | undefined): 401 | 403 |
 }
 
 const BYTE_RANGE = /^bytes=(\d*)-(\d*)$/;
+
+export type ResolvedByteRange = { start: number; end: number };
+
+/**
+ * Map one safe range onto a known file size.
+ * Returns null when the range starts past the end or the file is empty.
+ */
+export function resolveByteRange(range: string, size: number): ResolvedByteRange | null {
+  const match = BYTE_RANGE.exec(range);
+  if (!match || !Number.isSafeInteger(size) || size <= 0) return null;
+  const startRaw = match[1] ?? "";
+  const endRaw = match[2] ?? "";
+  if (!startRaw && !endRaw) return null;
+
+  if (!startRaw) {
+    const suffix = Number(endRaw);
+    if (!Number.isSafeInteger(suffix) || suffix <= 0) return null;
+    const take = Math.min(suffix, size);
+    return { start: size - take, end: size - 1 };
+  }
+
+  const start = Number(startRaw);
+  if (!Number.isSafeInteger(start) || start < 0 || start >= size) return null;
+  const end = endRaw ? Number(endRaw) : size - 1;
+  if (!Number.isSafeInteger(end) || end < start) return null;
+  return { start, end: Math.min(end, size - 1) };
+}
 
 /** A single byte range, or undefined when the header is missing or unsafe. */
 export function safeRangeHeader(value: string | null): string | undefined {

@@ -34,7 +34,7 @@ export default async function AdminUnreleasedPage() {
       <div>
         <h1 className="section-heading text-3xl">Unreleased</h1>
         <p className="mt-2 text-sm text-hero-muted">
-          Upload the MP3 for each track into private Blob. Files stay out of the repo. Members stream them from Early access. There is no public URL and no download button.
+          Upload the MP3 for each track into private Blob. Files stay out of the repo. Preview a stored track here, or stream it from Early access as a Supporter or VIP. There is no public URL and no download button.
         </p>
       </div>
       {configured ? null : (
