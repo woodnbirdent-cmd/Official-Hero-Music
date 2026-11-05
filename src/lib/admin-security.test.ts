@@ -75,6 +75,14 @@ test("callbacks and origins stay on this admin site", () => {
   assert.equal(sameOrigin(null, "officialheromusic.com"), false);
 });
 
+test("admin CSP allows the private Blob upload host and no other", () => {
+  for (const https of [true, false]) {
+    const csp = new Map(adminSecurityHeaders(https)).get("Content-Security-Policy") || "";
+    const connectSrc = csp.split("; ").find((directive) => directive.startsWith("connect-src "));
+    assert.equal(connectSrc, "connect-src 'self' https://vercel.com/api/blob/");
+  }
+});
+
 test("admin responses set the security headers", () => {
   const headers = new Map(adminSecurityHeaders(true));
   assert.match(headers.get("Content-Security-Policy") || "", /frame-ancestors 'none'/);
