@@ -10,6 +10,7 @@ import {
   UNRELEASED_UPLOAD_TTL_MS,
   buildAudioStreamHeaders,
   getUnreleasedTrack,
+  resolveByteRange,
   safeRangeHeader,
   streamAccessStatus,
   streamDeniedHeaders,
@@ -37,7 +38,7 @@ test("catalog is the two unreleased #Hero tracks and no public URL", () => {
   assert.equal(UNRELEASED_UPLOAD_TTL_MS, 10 * 60 * 1000);
 });
 
-test("stream access matches supporter and above", () => {
+test("stream access matches supporter and above, and an admin session at any tier", () => {
   assert.equal(streamAccessStatus(null), 401);
   assert.equal(streamAccessStatus(undefined), 401);
   assert.equal(streamAccessStatus(""), 401);
@@ -45,7 +46,11 @@ test("stream access matches supporter and above", () => {
   for (const tier of TIERS) {
     const expected = tierAtLeast(tier, "supporter") ? 200 : 403;
     assert.equal(streamAccessStatus(tier), expected, tier);
+    assert.equal(streamAccessStatus(tier, { admin: false }), expected, tier);
+    assert.equal(streamAccessStatus(tier, { admin: true }), 200, tier);
   }
+  assert.equal(streamAccessStatus(null, { admin: true }), 200);
+  assert.equal(streamAccessStatus("free", { admin: true }), 200);
 });
 
 test("upload target is the catalog pathname only", () => {
@@ -67,6 +72,17 @@ test("range headers stay a single byte range", () => {
   assert.equal(safeRangeHeader("bytes=-"), undefined);
   assert.equal(safeRangeHeader("bytes=0-1, 2-3"), undefined);
   assert.equal(safeRangeHeader("bytes=0-1\r\nX-Evil: 1"), undefined);
+});
+
+test("byte ranges resolve against the file size", () => {
+  assert.deepEqual(resolveByteRange("bytes=0-1", 7202119), { start: 0, end: 1 });
+  assert.deepEqual(resolveByteRange("bytes=0-", 3431146), { start: 0, end: 3431145 });
+  assert.deepEqual(resolveByteRange("bytes=500-600", 1000), { start: 500, end: 600 });
+  assert.deepEqual(resolveByteRange("bytes=-1024", 1000), { start: 0, end: 999 });
+  assert.deepEqual(resolveByteRange("bytes=-10", 1000), { start: 990, end: 999 });
+  assert.equal(resolveByteRange("bytes=7202119-", 7202119), null);
+  assert.equal(resolveByteRange("bytes=10-5", 1000), null);
+  assert.equal(resolveByteRange("bytes=0-1", 0), null);
 });
 
 test("stream responses are private, inline, and do not leak blob URLs", () => {
@@ -97,6 +113,26 @@ test("stream responses are private, inline, and do not leak blob URLs", () => {
   assert.equal(denied.get("Cache-Control"), "private, no-store");
 });
 
+test("a private blob bytes=0-1 read becomes 206 even when the SDK reports 200", () => {
+  // get() keeps the store headers and sets statusCode 200 for a partial body.
+  const upstream = new Headers({
+    "content-type": "audio/mpeg",
+    "content-length": "2",
+    "content-range": "bytes 0-1/7202119",
+    "accept-ranges": "bytes",
+    "content-disposition": 'inline; filename="listen.mp3"',
+  });
+  const probe = buildAudioStreamHeaders(upstream, true);
+  assert.equal(probe.status, 206);
+  assert.equal(probe.headers.get("Content-Type"), "audio/mpeg");
+  assert.equal(probe.headers.get("Content-Length"), "2");
+  assert.equal(probe.headers.get("Content-Range"), "bytes 0-1/7202119");
+  assert.equal(probe.headers.get("Accept-Ranges"), "bytes");
+  assert.equal(probe.headers.get("Content-Disposition"), "inline");
+  assert.equal(probe.headers.get("Cache-Control"), "private, no-store");
+  assert.equal(probe.headers.get("Content-Disposition")?.includes("filename"), false);
+});
+
 test("playback and upload stay on private routes", () => {
   const stream = readFileSync(join(root, "src/app/api/stream/[trackId]/route.ts"), "utf8");
   const audio = readFileSync(join(root, "src/lib/private-audio.ts"), "utf8");
@@ -104,12 +140,19 @@ test("playback and upload stay on private routes", () => {
   const upload = readFileSync(join(root, "src/app/api/admin/unreleased/route.ts"), "utf8");
   const form = readFileSync(join(root, "src/components/admin/UnreleasedUploadForm.tsx"), "utf8");
   const page = readFileSync(join(root, "src/app/members/early-access/page.tsx"), "utf8");
+  const adminPage = readFileSync(join(root, "src/app/admin/(panel)/unreleased/page.tsx"), "utf8");
+  const middleware = readFileSync(join(root, "src/middleware.ts"), "utf8");
+  const membersLayout = readFileSync(join(root, "src/app/members/layout.tsx"), "utf8");
+  const rootLayout = readFileSync(join(root, "src/app/layout.tsx"), "utf8");
 
   const catalog = readFileSync(join(root, "src/lib/unreleased-tracks.ts"), "utf8");
+  assert.match(stream, /adminGate/);
   assert.match(stream, /currentMember/);
   assert.match(stream, /streamAccessStatus/);
   assert.match(stream, /buildAudioStreamHeaders/);
   assert.match(stream, /streamDeniedHeaders/);
+  assert.match(stream, /export async function HEAD/);
+  assert.equal(stream.includes("statusCode !== 200"), false);
   assert.match(catalog, /private, no-store/);
   assert.equal(stream.includes("downloadUrl"), false);
   assert.equal(stream.includes("blob.vercel-storage.com"), false);
@@ -134,5 +177,16 @@ test("playback and upload stay on private routes", () => {
   assert.match(upload, /addRandomSuffix: false/);
   assert.match(upload, /allowOverwrite: true/);
   assert.match(form, /access: "private"/);
+  assert.match(form, /controlsList="nodownload"/);
+  assert.match(form, /\/api\/stream\//);
+  assert.equal(form.includes("download="), false);
   assert.equal(form.includes("downloadUrl"), false);
+  assert.match(adminPage, /requireAdmin/);
+
+  assert.match(middleware, /pathname !== "\/admin" && !pathname.startsWith\("\/admin\/"\)/);
+  assert.equal(middleware.includes("media-src"), false);
+  assert.equal(membersLayout.includes("Content-Security-Policy"), false);
+  assert.equal(membersLayout.includes("media-src"), false);
+  assert.equal(rootLayout.includes("Content-Security-Policy"), false);
+  assert.equal(rootLayout.includes("media-src"), false);
 });

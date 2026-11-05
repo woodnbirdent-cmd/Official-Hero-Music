@@ -87,6 +87,21 @@ export default function UnreleasedUploadForm({
       <button type="submit" className="btn-primary" disabled={!enabled || pending}>
         {pending ? `Uploading ${progress}%` : "Upload MP3"}
       </button>
+      {stored ? (
+        <div className="space-y-2">
+          <p className="text-sm text-hero-muted">Preview. Playback stays on this site.</p>
+          <audio
+            controls
+            controlsList="nodownload"
+            preload="none"
+            src={`/api/stream/${trackId}`}
+            aria-label={`Preview ${title}`}
+            className="h-10 w-full accent-hero-accent"
+          >
+            Your browser cannot play this audio.
+          </audio>
+        </div>
+      ) : null}
       {message ? (
         <p className="text-sm text-hero-accent" role="status">
           {message}

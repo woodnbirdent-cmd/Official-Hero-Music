@@ -80,6 +80,8 @@ test("admin CSP allows the private Blob upload host and no other", () => {
     const csp = new Map(adminSecurityHeaders(https)).get("Content-Security-Policy") || "";
     const connectSrc = csp.split("; ").find((directive) => directive.startsWith("connect-src "));
     assert.equal(connectSrc, "connect-src 'self' https://vercel.com/api/blob/");
+    const mediaSrc = csp.split("; ").find((directive) => directive.startsWith("media-src "));
+    assert.equal(mediaSrc, "media-src 'self'");
   }
 });
 
