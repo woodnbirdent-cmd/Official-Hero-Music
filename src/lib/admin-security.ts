@@ -85,7 +85,8 @@ export function adminSecurityHeaders(https: boolean): [string, string][] {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    // uploadPresigned PUTs the MP3 to getApiUrl() (https://vercel.com/api/blob/?pathname=…).
+    "connect-src 'self' https://vercel.com/api/blob/",
     ...(https ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
   const headers: [string, string][] = [
