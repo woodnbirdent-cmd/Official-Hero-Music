@@ -90,7 +90,7 @@ export async function assertSameOrigin(): Promise<boolean> {
 /** Origin check plus the allowlist. Sensitive Stripe changes also need a recent sign-in. */
 export async function guardAdminMutation(options?: {
   recent?: boolean;
-}): Promise<{ ok: true; member: Member } | { ok: false; error: string }> {
+}): Promise<{ ok: true; member: Member; sessionCreatedAt: Date } | { ok: false; error: string }> {
   if (!(await assertSameOrigin())) return { ok: false, error: "Could not confirm this request." };
   const gate = await adminGate();
   if (!gate.ok) {
@@ -100,5 +100,5 @@ export async function guardAdminMutation(options?: {
   if (options?.recent && !sessionIsFresh(gate.sessionCreatedAt, ADMIN_REAUTH_SECONDS)) {
     return { ok: false, error: "Sign in again before changing a member or a Stripe subscription." };
   }
-  return { ok: true, member: gate.member };
+  return { ok: true, member: gate.member, sessionCreatedAt: gate.sessionCreatedAt };
 }

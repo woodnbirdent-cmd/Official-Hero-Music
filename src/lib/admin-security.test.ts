@@ -50,6 +50,8 @@ test("magic links are five minutes and sign-in routes are rate limited", () => {
   assert.ok(limits["/sign-in/magic-link"].max <= 5);
   assert.ok(limits["/sign-in/email"].max <= 10);
   assert.ok(limits["/sign-up/email"].window >= 60);
+  assert.equal(limits["/change-password"].max, 5);
+  assert.equal(limits["/change-password"].window, 10 * 60);
 });
 
 test("session freshness and confirmation phrases", () => {
@@ -92,6 +94,8 @@ test("admin routes and actions authorize on the server", () => {
     "src/app/admin/members/export/route.ts",
     "src/app/admin/orders/actions.ts",
     "src/app/admin/members/actions.ts",
+    "src/app/admin/password/actions.ts",
+    "src/app/admin/(panel)/password/page.tsx",
     "src/lib/admin-data.ts",
     "src/lib/admin-mutations.ts",
     "src/lib/admin-store.ts",

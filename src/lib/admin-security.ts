@@ -21,6 +21,7 @@ const SIGN_IN_LIMITS = {
   "/magic-link/verify": { window: 10 * 60, max: 10 },
   "/sign-in/email": { window: 10 * 60, max: 10 },
   "/sign-up/email": { window: 10 * 60, max: 10 },
+  "/change-password": { window: 10 * 60, max: 5 },
 } as const;
 
 export function adminSignInRateLimits(): typeof SIGN_IN_LIMITS {
