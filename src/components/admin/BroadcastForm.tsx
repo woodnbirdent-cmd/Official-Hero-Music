@@ -9,15 +9,14 @@ import {
   DEFAULT_AUDIENCES,
   DEFAULT_BODY,
   DEFAULT_SUBJECT,
-  MEMBER_AUDIENCES,
-  NEWSLETTER_MISSING,
+  SELECTABLE_AUDIENCES,
   UNSUBSCRIBE_PREVIEW,
   broadcastFooter,
-  type MemberAudience,
-  type MemberCounts,
+  type AudienceCounts,
+  type AudienceId,
 } from "@/lib/broadcast-copy";
 
-function sameAudiences(left: readonly MemberAudience[], right: readonly MemberAudience[]): boolean {
+function sameAudiences(left: readonly AudienceId[], right: readonly AudienceId[]): boolean {
   return left.length === right.length && right.every((audience) => left.includes(audience));
 }
 
@@ -33,7 +32,7 @@ export default function BroadcastForm({
   databaseConfigured,
   alreadySent,
 }: {
-  counts: MemberCounts;
+  counts: AudienceCounts;
   total: number;
   fromAddress: string | null;
   configured: boolean;
@@ -46,7 +45,7 @@ export default function BroadcastForm({
   const previewRequest = useRef(0);
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [body, setBody] = useState(DEFAULT_BODY);
-  const [selected, setSelected] = useState<MemberAudience[]>([...DEFAULT_AUDIENCES]);
+  const [selected, setSelected] = useState<AudienceId[]>([...DEFAULT_AUDIENCES]);
   const [groupCounts, setGroupCounts] = useState(counts);
   const [currentTotal, setCurrentTotal] = useState(total);
   const [error, setError] = useState("");
@@ -60,7 +59,7 @@ export default function BroadcastForm({
   const canSend =
     configured && databaseConfigured && selected.length > 0 && currentTotal > 0 && !priorSend && !pending && !counting;
 
-  async function toggle(audience: MemberAudience) {
+  async function toggle(audience: AudienceId) {
     const next = selected.includes(audience)
       ? selected.filter((item) => item !== audience)
       : [...selected, audience];
@@ -134,7 +133,7 @@ export default function BroadcastForm({
       <form onSubmit={openConfirm} className="card-surface space-y-5">
         <fieldset className="space-y-3">
           <legend className="section-label mb-2">Audience</legend>
-          {MEMBER_AUDIENCES.map((audience) => (
+          {SELECTABLE_AUDIENCES.map((audience) => (
             <label key={audience} className="flex items-center justify-between gap-3 text-sm">
               <span className="flex items-center gap-2 text-hero-light">
                 <input
@@ -149,16 +148,6 @@ export default function BroadcastForm({
               <span className="font-bold text-white">{groupCounts[audience]}</span>
             </label>
           ))}
-          <label className="flex items-start justify-between gap-3 text-sm">
-            <span className="flex items-start gap-2 text-hero-muted">
-              <input type="checkbox" disabled checked={false} aria-describedby="newsletter-missing" />
-              <span>{AUDIENCE_LABELS.newsletter}</span>
-            </span>
-            <span className="font-bold text-white">Not stored</span>
-          </label>
-          <p id="newsletter-missing" className="text-sm text-hero-muted">
-            {NEWSLETTER_MISSING}
-          </p>
         </fieldset>
 
         <p className="text-sm text-hero-light" aria-live="polite">

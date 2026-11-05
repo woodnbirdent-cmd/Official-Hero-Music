@@ -15,17 +15,15 @@ import {
   BROADCAST_SUBJECT_LINE,
   BROADCAST_SUBJECT_LONG,
   BROADCAST_SUBJECT_REQUIRED,
-  MEMBER_AUDIENCES,
   NEWSLETTER_AUDIENCE,
-  NEWSLETTER_REJECTED,
+  SELECTABLE_AUDIENCES,
   SUBJECT_MAX,
   alreadySentMessage,
   broadcastFooter,
   escapeHtml,
   htmlWithLinks,
+  type AudienceCounts,
   type AudienceId,
-  type MemberAudience,
-  type MemberCounts,
 } from "./broadcast-copy.ts";
 import { SITE } from "./constants.ts";
 import { isTier } from "./tiers.ts";
@@ -53,7 +51,7 @@ export const BROADCAST_RATE_MAX = 3;
 const EMAIL = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
 const FROM_ADDRESS = /^Official #Hero <noreply@[a-z0-9.-]+\.[a-z]{2,}>$/;
 
-export type { AudienceId, MemberAudience, MemberCounts } from "./broadcast-copy.ts";
+export type { AudienceCounts, AudienceId, MemberAudience, MemberCounts } from "./broadcast-copy.ts";
 
 export type BroadcastResult =
   | { ok: true; recipientCount: number; failed: number }
@@ -70,7 +68,6 @@ export type BroadcastStore = {
   recipients(): Promise<{
     groups: AudienceGroups;
     unsubscribed: string[];
-    newsletterStored: boolean;
   }>;
   claim(input: { id: string; sentBy: string; subject: string; now: Date }): Promise<BroadcastClaim>;
   release(id: string): Promise<void>;
@@ -115,23 +112,26 @@ export function broadcastRateDecision(current: PasswordRateSnapshot | null, now:
 
 export function parseAudiences(
   values: readonly string[],
-): { ok: true; audiences: MemberAudience[] } | { ok: false; error: string } {
+): { ok: true; audiences: AudienceId[] } | { ok: false; error: string } {
   if (values.length === 0) return { ok: false, error: BROADCAST_CHOOSE };
-  const picked = new Set<MemberAudience>();
+  const picked = new Set<AudienceId>();
   for (const value of values) {
-    if (value === NEWSLETTER_AUDIENCE) return { ok: false, error: NEWSLETTER_REJECTED };
+    if (value === NEWSLETTER_AUDIENCE) {
+      picked.add(NEWSLETTER_AUDIENCE);
+      continue;
+    }
     if (!isTier(value)) return { ok: false, error: BROADCAST_BAD_GROUP };
     picked.add(value);
   }
   if (picked.size === 0) return { ok: false, error: BROADCAST_CHOOSE };
-  return { ok: true, audiences: MEMBER_AUDIENCES.filter((audience) => picked.has(audience)) };
+  return { ok: true, audiences: SELECTABLE_AUDIENCES.filter((audience) => picked.has(audience)) };
 }
 
 export function validateBroadcast(
   subject: string,
   body: string,
   audiences: readonly string[],
-): { ok: true; subject: string; body: string; audiences: MemberAudience[] } | { ok: false; error: string } {
+): { ok: true; subject: string; body: string; audiences: AudienceId[] } | { ok: false; error: string } {
   const trimmedSubject = subject.trim();
   const trimmedBody = body.trim();
   if (!trimmedSubject) return { ok: false, error: BROADCAST_SUBJECT_REQUIRED };
@@ -145,7 +145,7 @@ export function validateBroadcast(
 }
 
 /** Same subject, message, and audience cannot be sent twice. Audience order does not matter. */
-export function broadcastId(subject: string, body: string, audiences: readonly MemberAudience[]): string {
+export function broadcastId(subject: string, body: string, audiences: readonly AudienceId[]): string {
   const key = JSON.stringify({
     subject: subject.trim(),
     body: body.trim(),
@@ -268,7 +268,7 @@ export function buildMessages(input: {
   subject: string;
   body: string;
   from: string;
-  audiences: readonly MemberAudience[];
+  audiences: readonly AudienceId[];
   secret: string;
 }): OutboundEmail[] {
   const messages: OutboundEmail[] = [];
@@ -431,10 +431,11 @@ export async function runBroadcast(input: {
   return { ok: true, recipientCount: delivery.sent, failed: delivery.failed };
 }
 
-export function publicCounts(counts: Record<AudienceId, number>): MemberCounts {
+export function publicCounts(counts: Record<AudienceId, number>): AudienceCounts {
   return {
     free: counts.free,
     supporter: counts.supporter,
     vip: counts.vip,
+    newsletter: counts.newsletter,
   };
 }

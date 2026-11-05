@@ -8,8 +8,8 @@ import {
   parseAudiences,
   runBroadcast,
   validateBroadcast,
+  type AudienceCounts,
   type BroadcastResult,
-  type MemberCounts,
 } from "@/lib/broadcast";
 import {
   BROADCAST_CONFIRM_REQUIRED,
@@ -30,7 +30,7 @@ import {
 const RECENT_ERROR = "Sign in again before sending email.";
 
 export type BroadcastPreviewResult =
-  | { ok: true; counts: MemberCounts; total: number; newsletterStored: false }
+  | { ok: true; counts: AudienceCounts; total: number }
   | { ok: false; error: string };
 
 /** Counts only. Does not send mail. */
@@ -46,7 +46,6 @@ export async function previewBroadcast(audiences: string[]): Promise<BroadcastPr
       ok: true,
       counts: preview.counts,
       total: preview.total,
-      newsletterStored: false,
     };
   } catch {
     console.error("Broadcast preview failed");
@@ -97,7 +96,6 @@ export async function sendBroadcast(formData: FormData): Promise<BroadcastResult
           return {
             groups: loaded.groups,
             unsubscribed: loaded.unsubscribed,
-            newsletterStored: loaded.newsletterStored,
           };
         },
         claim: claimBroadcast,

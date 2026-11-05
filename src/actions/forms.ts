@@ -1,5 +1,8 @@
 "use server";
 
+import { normalizeEmail } from "@/lib/broadcast";
+import { saveMailingSignup } from "@/lib/mailing-list";
+
 export type FormState = {
   ok: boolean;
   message: string;
@@ -12,11 +15,20 @@ function requireField(value: FormDataEntryValue | null, name: string): string {
   return v;
 }
 
+function readEmail(value: FormDataEntryValue | null): string {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) throw new Error("Email is required");
+  const email = normalizeEmail(raw);
+  if (!email) throw new Error("Enter a valid email");
+  return email;
+}
+
 async function persistSubmission(
   type: string,
   payload: Record<string, string>
 ): Promise<void> {
-  // MVP: log the form type only. Do not log names, emails, or messages.
+  // Log the form type only. Do not log names, emails, or messages.
+  // Join and the merch waitlist are saved before this runs. Booking and prayer are not stored.
   console.log(`[#Hero form:${type}] received`);
   void payload;
   // Simulate async persistence
@@ -29,8 +41,9 @@ export async function submitJoin(
 ): Promise<FormState> {
   try {
     const name = requireField(formData.get("name"), "Name");
-    const email = requireField(formData.get("email"), "Email");
-    if (!email.includes("@")) throw new Error("Enter a valid email");
+    const email = readEmail(formData.get("email"));
+    const saved = await saveMailingSignup({ email, name, source: "join" });
+    if (!saved) throw new Error("Something went wrong");
     await persistSubmission("join", { name, email });
     return {
       ok: true,
@@ -97,8 +110,9 @@ export async function submitMerchWaitlist(
   formData: FormData
 ): Promise<FormState> {
   try {
-    const email = requireField(formData.get("email"), "Email");
-    if (!email.includes("@")) throw new Error("Enter a valid email");
+    const email = readEmail(formData.get("email"));
+    const saved = await saveMailingSignup({ email, name: "", source: "waitlist" });
+    if (!saved) throw new Error("Something went wrong");
     await persistSubmission("merch-waitlist", { email });
     return {
       ok: true,

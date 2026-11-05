@@ -35,8 +35,6 @@ import {
   DEFAULT_BODY,
   DEFAULT_SUBJECT,
   GENERAL_FOOTER,
-  NEWSLETTER_MISSING,
-  NEWSLETTER_REJECTED,
   SUPPORTER_VIP_FOOTER,
   alreadySentMessage,
   broadcastFooter,
@@ -74,7 +72,7 @@ function memoryStore(options: { groups: AudienceGroups; unsubscribed?: string[] 
   const store: BroadcastStore = {
     async recipients() {
       calls.recipients += 1;
-      return { groups: options.groups, unsubscribed: options.unsubscribed ?? [], newsletterStored: false };
+      return { groups: options.groups, unsubscribed: options.unsubscribed ?? [] };
     },
     async claim(input) {
       calls.claim += 1;
@@ -126,9 +124,8 @@ test("default copy, footer, and audience match the unreleased note", () => {
   assert.equal(broadcastFooter(DEFAULT_AUDIENCES), SUPPORTER_VIP_FOOTER);
   assert.equal(broadcastFooter(["free"]), GENERAL_FOOTER);
   assert.equal(broadcastFooter(["supporter", "free"]), GENERAL_FOOTER);
-  assert.match(NEWSLETTER_MISSING, /not stored/i);
-  assert.match(NEWSLETTER_MISSING, /no subscribers table/i);
-  assert.match(NEWSLETTER_MISSING, /no Resend audience/i);
+  assert.equal(broadcastFooter(["newsletter"]), GENERAL_FOOTER);
+  assert.equal(broadcastFooter(["supporter", "vip", "newsletter"]), GENERAL_FOOTER);
 });
 
 test("from address reuses the ADMIN_EMAIL_FROM domain", () => {
@@ -154,12 +151,12 @@ test("already sent message names the UTC date", () => {
   assert.match(alreadySentMessage(new Date(Number.NaN)), /^Already sent on /);
 });
 
-test("audience parsing rejects the missing mailing list and unknown groups", () => {
+test("audience parsing accepts the mailing list and rejects unknown groups", () => {
   assert.deepEqual(parseAudiences(["vip", "free"]), { ok: true, audiences: ["free", "vip"] });
+  assert.deepEqual(parseAudiences(["newsletter", "vip"]), { ok: true, audiences: ["vip", "newsletter"] });
   assert.equal(parseAudiences([]).ok, false);
   const newsletter = parseAudiences(["newsletter"]);
-  assert.equal(newsletter.ok, false);
-  if (!newsletter.ok) assert.equal(newsletter.error, NEWSLETTER_REJECTED);
+  assert.deepEqual(newsletter, { ok: true, audiences: ["newsletter"] });
   const unknown = parseAudiences(["supporter", "everyone"]);
   assert.equal(unknown.ok, false);
   if (!unknown.ok) assert.equal(unknown.error.includes("everyone"), false);
@@ -445,7 +442,7 @@ test("in-progress, empty, unconfigured, and rate limited sends do not call Resen
   });
   assert.deepEqual(blocked, { ok: false, error: BROADCAST_RATE_LIMITED });
 
-  const missingList = await runBroadcast({
+  const emptyList = await runBroadcast({
     subject: "Hello",
     body: "Hello there",
     audiences: ["newsletter"],
@@ -457,10 +454,42 @@ test("in-progress, empty, unconfigured, and rate limited sends do not call Resen
     store: active.store,
     fetchImpl,
   });
-  assert.equal(missingList.ok, false);
-  if (!missingList.ok) assert.equal(missingList.error, NEWSLETTER_REJECTED);
+  assert.deepEqual(emptyList, { ok: false, error: BROADCAST_EMPTY });
   assert.equal(seen.length, 0);
   assert.equal(validateBroadcast("Hello\nthere", "Body", ["supporter"]).ok, false);
+  assert.equal(validateBroadcast("List note", "Hello there", ["newsletter"]).ok, true);
+});
+
+test("mailing list sends are deduped against members and skip unsubscribed addresses", async () => {
+  const seen: { url: string; init: RequestInit | undefined }[] = [];
+  const { store } = memoryStore({
+    groups: groups({
+      supporter: ["fan@example.com"],
+      newsletter: ["Fan@Example.com", "list@example.com", "gone@example.com"],
+    }),
+    unsubscribed: ["gone@example.com"],
+  });
+  const result = await runBroadcast({
+    subject: "Shop update",
+    body: "The shop is open.",
+    audiences: ["supporter", "newsletter"],
+    sentBy: "hero@officialheromusic.com",
+    from: FROM,
+    apiKey: API_KEY,
+    secret: SECRET,
+    rateAllowed: true,
+    store,
+    fetchImpl: okFetch(seen),
+  });
+  assert.deepEqual(result, { ok: true, recipientCount: 2, failed: 0 });
+  const payload = JSON.parse(String(seen[0]?.init?.body)) as { to: string[]; text: string }[];
+  assert.deepEqual(
+    payload.map((message) => message.to[0]).sort(),
+    ["fan@example.com", "list@example.com"],
+  );
+  assert.equal(payload.some((message) => message.to.includes("gone@example.com")), false);
+  assert.match(payload[0]?.text || "", /signed up for updates/);
+  assert.equal((payload[0]?.text || "").includes("Supporter or VIP member"), false);
 });
 
 test("claim window and send rate stay bounded", () => {
@@ -483,11 +512,25 @@ test("claim window and send rate stay bounded", () => {
   assert.equal(broadcastRateDecision(snapshot, start + BROADCAST_RATE_WINDOW_SECONDS * 1000).allowed, true);
 });
 
-test("join signups are not a stored list, and the admin send stays gated", () => {
+test("join and waitlist addresses are stored, and the admin send stays gated", () => {
   const forms = readFileSync(join(root, "src/actions/forms.ts"), "utf8");
+  assert.match(forms, /saveMailingSignup/);
+  assert.match(forms, /source: "join"/);
+  assert.match(forms, /source: "waitlist"/);
   assert.match(forms, /void payload/);
   assert.equal(forms.includes("INSERT"), false);
   assert.equal(forms.includes("resend.com"), false);
+
+  const list = readFileSync(join(root, "src/lib/mailing-list.ts"), "utf8");
+  assert.match(list, /CREATE TABLE IF NOT EXISTS mailing_list/);
+  assert.match(list, /email text PRIMARY KEY/);
+  assert.match(list, /created_at timestamptz NOT NULL DEFAULT NOW\(\)/);
+  assert.match(list, /unsubscribed boolean NOT NULL DEFAULT false/);
+  assert.match(list, /source IN \('join', 'waitlist'\)/);
+  assert.match(list, /ON CONFLICT \(email\) DO UPDATE/);
+  assert.match(list, /mailing_list\.unsubscribed OR EXCLUDED\.unsubscribed/);
+  assert.match(list, /SET unsubscribed = true/);
+  assert.match(list, /normalizeEmail/);
 
   const action = readFileSync(join(root, "src/app/admin/email/actions.ts"), "utf8");
   const page = readFileSync(join(root, "src/app/admin/(panel)/email/page.tsx"), "utf8");
@@ -497,16 +540,21 @@ test("join signups are not a stored list, and the admin send stays gated", () =>
   const store = readFileSync(join(root, "src/lib/broadcast-store.ts"), "utf8");
   const route = readFileSync(join(root, "src/app/unsubscribe/route.ts"), "utf8");
   const delivery = readFileSync(join(root, "src/lib/broadcast.ts"), "utf8");
+  const copy = readFileSync(join(root, "src/lib/constants.ts"), "utf8");
 
+  assert.equal(/\bhis\b/i.test(copy), false);
   assert.match(action, /guardAdminMutation\(\{\s*recent:\s*true/);
   assert.match(action, /recentError:/);
   assert.match(action, /consumeBroadcastRateLimit/);
   assert.match(action, /confirm"\) \|\| ""\) !== "send"/);
   assert.match(action, /fetchImpl: fetch/);
+  assert.equal(action.includes("newsletterStored"), false);
   assert.match(page, /requireAdmin/);
   assert.match(unreleased, /BroadcastPanel/);
   assert.match(panel, /requireAdmin/);
-  assert.match(form, /NEWSLETTER_MISSING/);
+  assert.match(form, /SELECTABLE_AUDIENCES/);
+  assert.equal(form.includes("Not stored"), false);
+  assert.equal(form.includes("NEWSLETTER_MISSING"), false);
   assert.match(form, /await sendBroadcast\(/);
   assert.equal(form.includes("action={sendBroadcast}"), false);
   assert.match(form, /Confirm and send/);
@@ -515,7 +563,9 @@ test("join signups are not a stored list, and the admin send stays gated", () =>
   assert.match(store, /"sentBy"/);
   assert.match(store, /"recipientCount"/);
   assert.match(store, /email_unsubscribe/);
-  assert.match(store, /newsletterStored: false/);
+  assert.match(store, /FROM mailing_list WHERE unsubscribed = false/);
+  assert.match(store, /markMailingListUnsubscribed/);
+  assert.equal(store.includes("newsletterStored: false"), false);
   assert.match(store, /FOR UPDATE/);
   assert.match(store, /23505/);
   assert.match(store, /ON CONFLICT \(email\) DO NOTHING/);
@@ -526,7 +576,7 @@ test("join signups are not a stored list, and the admin send stays gated", () =>
   assert.equal(route.includes("resend.com"), false);
   assert.equal(route.includes("${token}"), false);
 
-  for (const source of [action, store, route, delivery]) {
+  for (const source of [action, store, route, delivery, list]) {
     for (const line of source.split("\n")) {
       if (!line.includes("console.")) continue;
       assert.equal(line.includes("${"), false, line);

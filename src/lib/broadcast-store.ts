@@ -10,21 +10,21 @@ import {
   decideClaim,
   emailFromUnsubscribeToken,
   publicCounts,
+  type AudienceCounts,
   type AudienceGroups,
   type BroadcastClaim,
-  type MemberCounts,
 } from "@/lib/broadcast";
-import { alreadySentMessage, DEFAULT_AUDIENCES, DEFAULT_BODY, DEFAULT_SUBJECT, type MemberAudience } from "@/lib/broadcast-copy";
+import { alreadySentMessage, DEFAULT_AUDIENCES, DEFAULT_BODY, DEFAULT_SUBJECT, type AudienceId } from "@/lib/broadcast-copy";
 import { getPool } from "@/lib/auth";
+import { ensureMailingList, markMailingListUnsubscribed } from "@/lib/mailing-list";
 import { ensureSchema } from "@/lib/members";
 import { isTier } from "@/lib/tiers";
 
 const USER_ID = /^[A-Za-z0-9_-]{1,128}$/;
 
 export type BroadcastPageData = {
-  counts: MemberCounts;
+  counts: AudienceCounts;
   total: number;
-  newsletterStored: false;
   fromAddress: string | null;
   configured: boolean;
   databaseConfigured: boolean;
@@ -71,19 +71,19 @@ export function broadcastDeliveryConfig(): { from: string | null; configured: bo
 
 const EMPTY_GROUPS: AudienceGroups = { free: [], supporter: [], vip: [], newsletter: [] };
 
-/** Member rows from "user", plus unsubscribe addresses. The Join list is not queried: it is not stored. */
+/** Member rows from "user", mailing_list rows that are still subscribed, and unsubscribe addresses. */
 export async function loadAudienceGroups(): Promise<{
   groups: AudienceGroups;
   unsubscribed: string[];
-  newsletterStored: false;
   databaseConfigured: boolean;
 }> {
   const pool = getPool();
   if (!pool) {
-    return { groups: EMPTY_GROUPS, unsubscribed: [], newsletterStored: false, databaseConfigured: false };
+    return { groups: EMPTY_GROUPS, unsubscribed: [], databaseConfigured: false };
   }
   await ensureSchema();
   await ensureBroadcastTables();
+  await ensureMailingList();
   const members = await pool.query<{ email: string; tier: string }>(
     `SELECT lower(btrim(email)) AS email, tier
      FROM "user"
@@ -96,19 +96,27 @@ export async function loadAudienceGroups(): Promise<{
     if (!isTier(row.tier) || !row.email) continue;
     groups[row.tier].push(row.email);
   }
-  const removed = await pool.query<{ email: string }>(`SELECT email FROM email_unsubscribe`);
+  const listed = await pool.query<{ email: string }>(
+    `SELECT email FROM mailing_list WHERE unsubscribed = false`,
+  );
+  for (const row of listed.rows) {
+    if (row.email) groups.newsletter.push(row.email);
+  }
+  const removed = await pool.query<{ email: string }>(
+    `SELECT email FROM email_unsubscribe
+     UNION
+     SELECT email FROM mailing_list WHERE unsubscribed = true`,
+  );
   return {
     groups,
     unsubscribed: removed.rows.map((row) => row.email),
-    newsletterStored: false,
     databaseConfigured: true,
   };
 }
 
-export async function previewAudience(audiences: readonly MemberAudience[]): Promise<{
-  counts: MemberCounts;
+export async function previewAudience(audiences: readonly AudienceId[]): Promise<{
+  counts: AudienceCounts;
   total: number;
-  newsletterStored: false;
   databaseConfigured: boolean;
 }> {
   const loaded = await loadAudienceGroups();
@@ -120,7 +128,6 @@ export async function previewAudience(audiences: readonly MemberAudience[]): Pro
   return {
     counts: publicCounts(composed.counts),
     total: composed.total,
-    newsletterStored: false,
     databaseConfigured: loaded.databaseConfigured,
   };
 }
@@ -135,7 +142,6 @@ export async function getBroadcastPageData(): Promise<BroadcastPageData> {
     return {
       counts: preview.counts,
       total: 0,
-      newsletterStored: false,
       fromAddress: from,
       configured,
       databaseConfigured: false,
@@ -145,7 +151,6 @@ export async function getBroadcastPageData(): Promise<BroadcastPageData> {
   return {
     counts: preview.counts,
     total: preview.total,
-    newsletterStored: false,
     fromAddress: from,
     configured,
     databaseConfigured: true,
@@ -303,13 +308,25 @@ export async function unsubscribeFromBroadcast(token: string): Promise<"ok" | "i
   if (!pool) return "unavailable";
   try {
     await ensureBroadcastTables();
-    await pool.query(
-      `INSERT INTO email_unsubscribe (email, "unsubscribedAt")
-       VALUES ($1, NOW())
-       ON CONFLICT (email) DO NOTHING`,
-      [email],
-    );
-    return "ok";
+    await ensureMailingList();
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(
+        `INSERT INTO email_unsubscribe (email, "unsubscribedAt")
+         VALUES ($1, NOW())
+         ON CONFLICT (email) DO NOTHING`,
+        [email],
+      );
+      await markMailingListUnsubscribed(client, email);
+      await client.query("COMMIT");
+      return "ok";
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch {
     console.error("Unsubscribe failed");
     return "unavailable";
