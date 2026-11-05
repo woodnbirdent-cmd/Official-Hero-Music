@@ -33,11 +33,14 @@ See `.env.example`:
 | `STRIPE_SECRET_KEY` | Stripe server key. Already set in Vercel. |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 | `SHIPPO_API_TOKEN` | Live merch rates and paid-order sync. Already set in Vercel. VIP checkout skips live rates. |
+| `BLOB_READ_WRITE_TOKEN` | Private Vercel Blob for unreleased audio. Set by connecting a **private** Blob store. `BLOB_STORE_ID` also works on Vercel via OIDC. |
 | `ADMIN_EMAILS` | Comma-separated emails allowed to open `/admin`. Set to `woodnbirdent@gmail.com,hero@officialheromusic.com`. Everyone else is denied. |
 | `RESEND_API_KEY` | Sends admin magic-link sign-in email. |
 | `ADMIN_EMAIL_FROM` | From address for that email. The domain must be verified in Resend. |
 
 Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
+
+Unreleased tracks (Listen, Still There) are listed on `/members/early-access`. Supporter and VIP stream them from `GET /api/stream/[trackId]`. The MP3s are not in git. Upload them at `/admin/unreleased` after a private Blob store is connected. Free members see an upgrade link to `/join`. Signed-out and free requests to the stream route get 401 and 403.
 
 `/admin` is limited to `ADMIN_EMAILS`, checked on the server against the database email for every admin page, export, and action. Sign in at `/admin/sign-in`. Magic links expire in 5 minutes, are single-use, and are stored hashed. Password sign-in uses the same generic error for every failure. Admin sessions must be newer than 8 hours. A password is optional. After signing in, each admin can set or change their own password at `/admin/password`. Setting or changing it requires that same 8-hour session (sign in again with an email link when it is older), a same-origin request, and at least 12 characters. Changing a password also requires the current one. Common passwords are rejected, and breached passwords are rejected when the Have I Been Pwned range check answers. Other sessions are revoked after a successful change. Canceling a Stripe subscription or deleting a Stripe customer requires a sign-in from the last 15 minutes plus a typed confirmation, and neither happens unless that confirmation is present. `/admin` sends `noindex`, `no-store`, and is omitted from `robots.txt` and the sitemap.
 

@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/members", label: "Members" },
   { href: "/admin/subscriptions", label: "Subscriptions" },
   { href: "/admin/activity", label: "Activity" },
+  { href: "/admin/unreleased", label: "Unreleased" },
   { href: "/admin/password", label: "Password" },
 ];
 

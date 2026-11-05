@@ -96,6 +96,8 @@ test("admin routes and actions authorize on the server", () => {
     "src/app/admin/members/actions.ts",
     "src/app/admin/password/actions.ts",
     "src/app/admin/(panel)/password/page.tsx",
+    "src/app/admin/(panel)/unreleased/page.tsx",
+    "src/app/api/admin/unreleased/route.ts",
     "src/lib/admin-data.ts",
     "src/lib/admin-mutations.ts",
     "src/lib/admin-store.ts",
