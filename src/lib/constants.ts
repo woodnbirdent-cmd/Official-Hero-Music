@@ -13,7 +13,7 @@ export const SITE = {
 } as const;
 
 export const BIO =
-  "Hailing from Jefferson City, Missouri, Christian hip-hop artist #Hero builds his sound entirely on real-life testimony and unyielding faith. Delivered from addiction, prison, and homelessness, he found new life and purpose in Christ. Today, as a dedicated husband and father of two, he operates with a fierce refusal to compromise his morals or spiritual foundation. In under a year of releasing music, #Hero has generated remarkable momentum across the CHH community, using his platform to share a raw, uncompromised message of hope, freedom, and the transforming power of Jesus.";
+  "Hailing from Jefferson City, Missouri, Christian hip-hop artist #Hero builds #Hero's sound entirely on real-life testimony and unyielding faith. Delivered from addiction, prison, and homelessness, he found new life and purpose in Christ. Today, as a dedicated husband and father of two, he operates with a fierce refusal to compromise #Hero's morals or spiritual foundation. In under a year of releasing music, #Hero has generated remarkable momentum across the CHH community, using #Hero's platform to share a raw, uncompromised message of hope, freedom, and the transforming power of Jesus.";
 
 export const SOCIALS = [
   { name: "X", href: "https://x.com/HeroMusicPage", label: "X / Twitter" },
@@ -80,13 +80,13 @@ export const STREAMING = [
 ] as const;
 
 export const SHORT_BIO =
-  "Hailing from Jefferson City, Missouri, Christian hip-hop artist #Hero builds his sound entirely on real-life testimony and unyielding faith. Delivered from addiction, prison, and homelessness, he found new life and purpose in Christ.";
+  "Hailing from Jefferson City, Missouri, Christian hip-hop artist #Hero builds #Hero's sound entirely on real-life testimony and unyielding faith. Delivered from addiction, prison, and homelessness, he found new life and purpose in Christ.";
 
 export const FYC = {
   title: "GRAMMY® FYC 2027",
   category: "Best New Artist",
   framing:
-    "Independent recording artist #Hero presents his official entry for Best New Artist consideration. Defined by a distinctive blend of raw lyricism and cutting-edge production, #Hero brings an authentic, genre-bending voice to contemporary music, capturing the pulse of modern culture through uncompromising testimony.",
+    "Independent recording artist #Hero presents #Hero's official entry for Best New Artist consideration. Defined by a distinctive blend of raw lyricism and cutting-edge production, #Hero brings an authentic, genre-bending voice to contemporary music, capturing the pulse of modern culture through uncompromising testimony.",
   highlights: [
     {
       title: "Uncompromising Integrity & Faith",
@@ -98,7 +98,7 @@ export const FYC = {
     },
     {
       title: "Authentic Underground Roots",
-      body: "Building a fiercely organic following driven entirely by raw lyrical transparency and dedication to the lord. While being used as a tool with his testimony.",
+      body: "Building a fiercely organic following driven entirely by raw lyrical transparency and dedication to the lord. While being used as a tool with #Hero's testimony.",
     },
   ],
 } as const;

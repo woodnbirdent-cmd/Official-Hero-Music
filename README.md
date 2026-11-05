@@ -38,7 +38,7 @@ See `.env.example`:
 | `RESEND_API_KEY` | Sends admin magic-link sign-in email. |
 | `ADMIN_EMAIL_FROM` | From address for that email. The domain must be verified in Resend. |
 
-Membership tables are created on the first account request. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
+Membership tables are created on the first account request. `mailing_list` is created the same way (`CREATE TABLE IF NOT EXISTS`) the first time someone uses Join or the merch waitlist, an admin loads the email audience, or someone opens an unsubscribe link. No migration command has to run before merge. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
 Unreleased tracks (Listen, Still There) are listed on `/members/early-access`. Supporter and VIP stream them from `GET /api/stream/[trackId]`. A signed-in `ADMIN_EMAILS` admin can preview each stored track on `/admin/unreleased`; that route re-checks the allowlist on every request, including Range seeks. The MP3s are not in git. Upload them at `/admin/unreleased` after a private Blob store is connected. Free members see an upgrade link to `/join`. Signed-out requests to the stream route get 401. Free requests get 403 unless the session is an allowlisted admin.
 
@@ -46,7 +46,7 @@ Unreleased tracks (Listen, Still There) are listed on `/members/early-access`. S
 
 The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, and `checkout.session.completed`.
 
-Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Submissions are logged server-side in MVP (swap for Formspree/DB/email later).
+Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Join and the merch waitlist save the address in `mailing_list` (lowercased, one row per email). Booking and prayer are logged server-side only.
 
 ## Pages / routes
 

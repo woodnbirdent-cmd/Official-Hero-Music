@@ -12,6 +12,11 @@ export const NEWSLETTER_AUDIENCE = "newsletter" as const;
 
 export type AudienceId = MemberAudience | typeof NEWSLETTER_AUDIENCE;
 
+export type AudienceCounts = Record<AudienceId, number>;
+
+/** Member tiers, then the mailing list. Checkbox order on /admin/email. */
+export const SELECTABLE_AUDIENCES: readonly AudienceId[] = [...MEMBER_AUDIENCES, NEWSLETTER_AUDIENCE];
+
 /** Supporter and VIP, matching the prefilled unreleased-songs note. */
 export const DEFAULT_AUDIENCES: MemberAudience[] = MEMBER_AUDIENCES.filter((tier) =>
   tierAtLeast(tier, "supporter"),
@@ -28,15 +33,7 @@ export const SUPPORTER_VIP_FOOTER =
 export const GENERAL_FOOTER =
   "You're getting this because you have a #Hero account or signed up for updates.";
 
-/**
- * The Join form does not persist addresses. There is no subscribers table and no Resend audience.
- * Merch waitlist submissions are discarded the same way and are not a broadcast audience.
- */
-export const NEWSLETTER_MISSING =
-  "The general email list is not stored. The Join form on /join accepts a name and email, but the site only logs that a form was received and does not save the address. There is no subscribers table and no Resend audience.";
-
-export const NEWSLETTER_REJECTED = "The mailing list is not stored, so it can't be selected.";
-
+/** Join and merch waitlist addresses live in mailing_list. Unsubscribed rows are excluded. */
 export const AUDIENCE_LABELS: Record<AudienceId, string> = {
   free: "Free members",
   supporter: "Supporter",
