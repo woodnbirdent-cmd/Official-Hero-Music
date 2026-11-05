@@ -86,6 +86,9 @@ export default function AdminSignInForm({
       )}
 
       <div className="space-y-4 border-t border-hero-gray pt-6">
+        <p className="text-sm text-hero-muted">
+          A password is optional. If you set one after signing in, use it here. Email links still work without one.
+        </p>
         <label className="block">
           <span className="section-label mb-2 block">Password</span>
           <input

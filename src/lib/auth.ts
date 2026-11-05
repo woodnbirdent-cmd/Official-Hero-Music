@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, getAuthoritativeSessionFromCtx } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins/magic-link";
 import { Pool } from "pg";
@@ -124,6 +124,30 @@ export const auth = betterAuth({
         ctx.body.callbackURL = "/admin";
         ctx.body.errorCallbackURL = "/admin/sign-in?error=link";
         ctx.body.newUserCallbackURL = "/admin";
+      }
+      if (ctx.path === "/change-password") {
+        try {
+          const session = await getAuthoritativeSessionFromCtx(ctx);
+          if (session?.user?.id && session.user.email && session.session?.createdAt) {
+            const { enforceAdminPasswordChange } = await import("@/lib/admin-password");
+            const newPassword = typeof ctx.body?.newPassword === "string" ? ctx.body.newPassword : "";
+            const currentPassword = typeof ctx.body?.currentPassword === "string" ? ctx.body.currentPassword : "";
+            const adminChange = await enforceAdminPasswordChange({
+              userId: session.user.id,
+              sessionEmail: session.user.email,
+              sessionCreatedAt: session.session.createdAt,
+              newPassword,
+              currentPassword,
+            });
+            if (adminChange && ctx.body && typeof ctx.body === "object") {
+              ctx.body.revokeOtherSessions = true;
+            }
+          }
+        } catch (error) {
+          if (error instanceof APIError) throw error;
+          console.error("Admin password change check failed");
+          throw new APIError("BAD_REQUEST", { message: "Could not confirm this request." });
+        }
       }
     }),
   },
