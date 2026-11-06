@@ -69,6 +69,11 @@ export default function VolunteerForm() {
       </label>
       <fieldset className="space-y-2">
         <legend className="section-label mb-2">Availability</legend>
+        <p className="text-sm text-hero-light">
+          Local churches are gathering a few hours before the show to do community outreach with people
+          experiencing homelessness and others who need it. If you are only joining that, leave the show-day
+          shifts unchecked.
+        </p>
         {VOLUNTEER_SHIFTS.map((shift) => (
           <label key={shift.id} className="flex items-center gap-3 text-sm text-hero-light">
             <input type="checkbox" name="availability" value={shift.id} />

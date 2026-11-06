@@ -11,7 +11,7 @@ import {
   ticketCapacity,
   ticketTier,
 } from "./show-config.ts";
-import { ownerSponsorshipEmail, sponsorshipReceiptEmail, ticketEmail } from "./show-copy.ts";
+import { ownerSponsorshipEmail, ownerVolunteerEmail, sponsorshipReceiptEmail, ticketEmail, volunteerConfirmationEmail } from "./show-copy.ts";
 import { showOrdersToCsv } from "./show-csv.ts";
 import { requestIsSameOrigin } from "./show-http.ts";
 import { parseDollarsToCents, parseSponsorshipFields, parseTicketFields, parseVolunteerFields, shirtSizeForTier } from "./show-input.ts";
@@ -357,6 +357,17 @@ test("public show page collects sponsorships and volunteers without selling tick
   assert.doesNotMatch(publicCopy, /\$15|\$25|\$50|General Admission|Ticket \+/);
   assert.doesNotMatch(page, /\bhis\b/i);
   assert.doesNotMatch(config, /Building Community Bridges|Solid Rock/);
+  const home = fs.readFileSync(path.join(root, "src/app/page.tsx"), "utf8");
+  const banner = fs.readFileSync(path.join(root, "src/components/show/SetApartBanner.tsx"), "utf8");
+  assert.match(home, /SetApartBanner/);
+  assert.match(banner, /href="\/set-apart"/);
+  assert.match(banner, /SHOW\.dateLabel/);
+  assert.match(banner, /SHOW\.timeLabel/);
+  assert.match(banner, /SHOW\.location/);
+  assert.match(banner, /SHOW\.headliner/);
+  assert.match(banner, /SHOW\.withLine/);
+  assert.match(banner, /SHOW\.poster/);
+  assert.doesNotMatch(`${home}\n${banner}`, /TicketPurchase|General Admission|\$15|donat|Building Community Bridges|Solid Rock/i);
   assert.match(nav, /href: "\/set-apart"/);
   assert.doesNotMatch(nav, /href: "\/tickets"/);
   assert.match(redirect, /source: "\/tickets", destination: "\/set-apart"/);
@@ -408,6 +419,55 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
     }).ok,
     false,
   );
+  const outreach = parseVolunteerFields({
+    name: "Bea Outreach",
+    email: "bea@example.com",
+    phone: "573-555-0188",
+    shifts: ["before"],
+    roles: ["outreach"],
+    roleOther: "",
+    shirtSize: "",
+    notes: "I can hand out flyers this week.",
+    companyWebsite: "",
+  });
+  assert.equal(outreach.ok, true);
+  if (outreach.ok) {
+    assert.equal(outreach.value.availability, "Before the show (community outreach)");
+    assert.equal(outreach.value.roleInterest, "Community outreach");
+    assert.doesNotMatch(outreach.value.availability, /Setup|During the show|Teardown/);
+    const order = {
+      kind: "volunteer",
+      buyerName: outreach.value.name,
+      buyerEmail: outreach.value.email,
+      phone: outreach.value.phone,
+      availability: outreach.value.availability,
+      roleInterest: outreach.value.roleInterest,
+      shirtSize: "",
+      notes: outreach.value.notes,
+      perks: "",
+      tickets: [],
+      tierName: "",
+      quantity: 1,
+      stripePaymentIntentId: "",
+      amountCents: 0,
+      status: "received",
+      businessName: "",
+      logoDelivery: "",
+      createdAt: new Date("2027-01-01T00:00:00Z"),
+    } as ShowOrder;
+    const confirmation = volunteerConfirmationEmail(order);
+    const owner = ownerVolunteerEmail(order);
+    const csv = showOrdersToCsv([order]);
+    for (const body of [confirmation.text, owner.text, csv]) {
+      assert.match(body, /Before the show \(community outreach\)/);
+      assert.match(body, /Community outreach/);
+      assert.doesNotMatch(body, /donat/i);
+    }
+  }
+  const form = fs.readFileSync(path.join(root, "src/components/show/VolunteerForm.tsx"), "utf8");
+  assert.match(form, /experiencing homelessness and others who need it/);
+  assert.match(form, /VOLUNTEER_ROLES/);
+  assert.match(form, /VOLUNTEER_SHIFTS/);
 });
 
 test("logo bytes reject a text file", () => {

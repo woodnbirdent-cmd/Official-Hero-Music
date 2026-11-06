@@ -129,8 +129,8 @@ export default async function SetApartPage({
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#ff4b4b]">Volunteer</p>
           <h2 className="mt-3 font-display text-5xl tracking-wide text-[#f6efe4] sm:text-6xl">Sign up to help</h2>
           <p className="mt-4 text-[#f6efe4]/80">
-            Help with {SHOW.name}. Sign-up is free. Choose the parts of the day you can be there and how you
-            want to help.
+            Help with {SHOW.name}. Sign-up is free. You can join community outreach a few hours before the
+            show, or help on the day of the show.
           </p>
           <div className="mt-8">
             <VolunteerForm />

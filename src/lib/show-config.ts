@@ -156,6 +156,7 @@ export function perkStorage(perks: readonly string[]): string {
 }
 
 export const VOLUNTEER_SHIFTS = [
+  { id: "before", label: "Before the show (community outreach)" },
   { id: "setup", label: "Setup" },
   { id: "during", label: "During the show" },
   { id: "teardown", label: "Teardown" },
@@ -165,6 +166,7 @@ export const VOLUNTEER_ROLES = [
   { id: "door", label: "Check-in / door" },
   { id: "merch", label: "Merch" },
   { id: "crew", label: "Setup crew" },
+  { id: "outreach", label: "Community outreach" },
 ] as const;
 
 export type VolunteerShiftId = (typeof VOLUNTEER_SHIFTS)[number]["id"];
