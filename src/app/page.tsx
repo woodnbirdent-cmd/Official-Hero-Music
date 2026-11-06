@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import HeroVideoBackground from "@/components/HeroVideoBackground";
+import SetApartBanner from "@/components/show/SetApartBanner";
 import PlaylistCover from "@/components/PlaylistCover";
 import RolloutHeavenCard from "@/components/RolloutHeavenCard";
 import SocialIcons from "@/components/SocialIcons";
@@ -104,6 +105,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <SetApartBanner />
 
       <section className="mx-auto max-w-6xl px-4 py-16">
         <p className="section-label mb-3">About</p>

@@ -357,6 +357,17 @@ test("public show page collects sponsorships and volunteers without selling tick
   assert.doesNotMatch(publicCopy, /\$15|\$25|\$50|General Admission|Ticket \+/);
   assert.doesNotMatch(page, /\bhis\b/i);
   assert.doesNotMatch(config, /Building Community Bridges|Solid Rock/);
+  const home = fs.readFileSync(path.join(root, "src/app/page.tsx"), "utf8");
+  const banner = fs.readFileSync(path.join(root, "src/components/show/SetApartBanner.tsx"), "utf8");
+  assert.match(home, /SetApartBanner/);
+  assert.match(banner, /href="\/set-apart"/);
+  assert.match(banner, /SHOW\.dateLabel/);
+  assert.match(banner, /SHOW\.timeLabel/);
+  assert.match(banner, /SHOW\.location/);
+  assert.match(banner, /SHOW\.headliner/);
+  assert.match(banner, /SHOW\.withLine/);
+  assert.match(banner, /SHOW\.poster/);
+  assert.doesNotMatch(`${home}\n${banner}`, /TicketPurchase|General Admission|\$15|donat|Building Community Bridges|Solid Rock/i);
   assert.match(nav, /href: "\/set-apart"/);
   assert.doesNotMatch(nav, /href: "\/tickets"/);
   assert.match(redirect, /source: "\/tickets", destination: "\/set-apart"/);
