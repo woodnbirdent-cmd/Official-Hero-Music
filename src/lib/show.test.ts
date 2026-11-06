@@ -381,7 +381,6 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
     shifts: ["setup", "teardown"],
     roles: ["door"],
     roleOther: "prayer team",
-    shirtSize: "L",
     notes: "I can lift speakers.",
     companyWebsite: "",
   });
@@ -390,7 +389,7 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
     assert.equal(saved.value.spam, false);
     assert.equal(saved.value.availability, "Setup; Teardown");
     assert.equal(saved.value.roleInterest, "Check-in / door; Other: prayer team");
-    assert.equal(saved.value.shirtSize, "L");
+    assert.equal(saved.value.shirtSize, "");
   }
   const spam = parseVolunteerFields({
     name: "Bot",
@@ -399,7 +398,6 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
     shifts: ["setup"],
     roles: ["merch"],
     roleOther: "",
-    shirtSize: "",
     notes: "",
     companyWebsite: "https://spam.example",
   });
@@ -413,7 +411,6 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
       shifts: [],
       roles: [],
       roleOther: "",
-      shirtSize: "",
       notes: "",
       companyWebsite: "",
     }).ok,
@@ -426,7 +423,6 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
     shifts: ["before"],
     roles: ["outreach"],
     roleOther: "",
-    shirtSize: "",
     notes: "I can hand out flyers this week.",
     companyWebsite: "",
   });
@@ -468,6 +464,8 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
   assert.match(form, /experiencing homelessness and others who need it/);
   assert.match(form, /VOLUNTEER_ROLES/);
   assert.match(form, /VOLUNTEER_SHIFTS/);
+  assert.doesNotMatch(form, /shirtSize|Shirt size/i);
+  assert.doesNotMatch(form, /donat|\$15|General Admission/i);
 });
 
 test("logo bytes reject a text file", () => {
