@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         buyerName: name,
       },
       success_url: `${origin}/tickets/success?kind=ticket&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/tickets?canceled=1`,
+      cancel_url: `${origin}/set-apart?canceled=1`,
     });
     sessionId = session.id;
     await attachStripeSession(orderId, session.id);

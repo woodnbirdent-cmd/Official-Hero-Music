@@ -7,6 +7,12 @@ import {
   formatDollars,
 } from "@/lib/show-config";
 
+function publicDollars(cents: number): string {
+  const dollars = cents / 100;
+  if (!Number.isInteger(dollars)) return formatDollars(cents);
+  return `$${dollars.toLocaleString("en-US")}`;
+}
+
 async function sendSponsorship(form: FormData): Promise<string> {
   const response = await fetch("/api/show/sponsorship", { method: "POST", body: form });
   const data: unknown = await response.json();
@@ -90,7 +96,7 @@ export default function SponsorshipForms() {
               }`}
               onClick={() => setAmount(String(cents / 100))}
             >
-              {formatDollars(cents)}
+              {publicDollars(cents)}
             </button>
           ))}
         </div>
@@ -105,7 +111,7 @@ export default function SponsorshipForms() {
           />
         </label>
         <p id="community-amount-help" className="text-xs text-hero-muted">
-          {formatDollars(COMMUNITY_SPONSOR.minCents)} to {formatDollars(COMMUNITY_SPONSOR.maxCents)}.
+          {publicDollars(COMMUNITY_SPONSOR.minCents)} to {publicDollars(COMMUNITY_SPONSOR.maxCents)}.
         </p>
         <label className="block text-sm">
           <span className="section-label mb-2 block">Name</span>
@@ -123,7 +129,7 @@ export default function SponsorshipForms() {
       <form onSubmit={onBusiness} className="card-surface space-y-4">
         <p className="section-label">Businesses</p>
         <h3 className="text-2xl font-black uppercase text-hero-accent">Business sponsorship</h3>
-        <p className="text-sm text-hero-light">Tier names and amounts are set for now and may be updated.</p>
+        <p className="text-sm text-hero-light">Suggested tiers. Names and amounts can change.</p>
         <fieldset className="space-y-3">
           <legend className="section-label mb-3">Tier</legend>
           {BUSINESS_SPONSOR_TIERS.map((tier) => (
@@ -138,7 +144,7 @@ export default function SponsorshipForms() {
                 />
                 <span className="font-bold uppercase tracking-wide">{tier.name}</span>
               </span>
-              <span>{formatDollars(tier.priceCents)}</span>
+              <span>{publicDollars(tier.priceCents)}</span>
             </label>
           ))}
         </fieldset>

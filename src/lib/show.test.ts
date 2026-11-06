@@ -210,6 +210,9 @@ test("emails and csv say sponsorship and name the perks", () => {
   assert.match(email.text, /Early access/);
   assert.match(email.text, /Meet & greet \(After the show\)/);
   assert.match(email.text, /SA-ABCD-EFGH-JKLM-NPQR/);
+  assert.match(email.text, /5–9 PM CT/);
+  assert.match(email.text, /Location TBA/);
+  assert.doesNotMatch(email.text, /Building Community Bridges|Solid Rock/);
   assert.doesNotMatch(email.text, /shirt/i);
   assert.doesNotMatch(`${email.subject}\n${email.text}\n${email.html}`, /donat|deductible/i);
   const sponsor = { ...order, kind: "sponsorship" as const, sponsorType: "community" as const, tierName: "Community Sponsor", perks: "", tickets: [] };
@@ -239,6 +242,7 @@ test("show copy does not use forbidden wording", () => {
   const files = [
     ...walk(path.join(root, "src/lib")).filter((file) => path.basename(file).startsWith("show-")),
     ...walk(path.join(root, "src/components/show")),
+    ...walk(path.join(root, "src/app/set-apart")),
     ...walk(path.join(root, "src/app/tickets")),
     ...walk(path.join(root, "src/app/checkin")),
     ...walk(path.join(root, "src/app/api/show")),
@@ -260,12 +264,49 @@ test("stripe webhook hands show payments to fulfillment", () => {
   assert.match(route, /checkout\.session\.async_payment_succeeded/);
 });
 
-test("public routes include tickets and omit check-in", () => {
+test("public routes include the show page and omit check-in", () => {
   const paths = publicSitemapPaths();
-  assert.ok(paths.includes("/tickets"));
+  assert.ok(paths.includes("/set-apart"));
+  assert.equal(paths.includes("/tickets"), false);
   assert.equal(paths.includes("/checkin"), false);
   const robots = fs.readFileSync(path.join(root, "src/app/robots.ts"), "utf8");
   assert.match(robots, /\/checkin/);
+  assert.doesNotMatch(robots, /set-apart/);
+});
+
+test("public show page collects sponsorships and volunteers without selling tickets", () => {
+  const page = fs.readFileSync(path.join(root, "src/app/set-apart/page.tsx"), "utf8");
+  const tour = fs.readFileSync(path.join(root, "src/app/tour/page.tsx"), "utf8");
+  const config = fs.readFileSync(path.join(root, "src/lib/show-config.ts"), "utf8");
+  const nav = fs.readFileSync(path.join(root, "src/lib/constants.ts"), "utf8");
+  const redirect = fs.readFileSync(path.join(root, "next.config.ts"), "utf8");
+  const publicCopy = `${page}\n${tour}`;
+  assert.match(page, /SponsorshipForms/);
+  assert.match(page, /VolunteerForm/);
+  assert.doesNotMatch(page, /TicketPurchase/);
+  assert.match(page, /SHOW\.location/);
+  assert.match(page, /SHOW\.timeLabel/);
+  assert.match(page, /SHOW\.headliner/);
+  assert.match(page, /SHOW\.withLine/);
+  assert.match(tour, /SHOW\.location/);
+  assert.match(config, /location: "Location TBA"/);
+  assert.match(config, /timeLabel: "5–9 PM CT"/);
+  assert.match(config, /headliner: "#HERO"/);
+  assert.match(config, /worship by Aubrey/);
+  assert.match(page, /SHOW\.poster/);
+  assert.match(page, /SHOW\.story/);
+  assert.match(config, /set-apart-poster\.jpg/);
+  assert.match(config, /set-apart-story\.jpg/);
+  assert.equal(fs.existsSync(path.join(root, "public/show/set-apart-poster.jpg")), true);
+  assert.equal(fs.existsSync(path.join(root, "public/show/set-apart-story.jpg")), true);
+  assert.equal(fs.existsSync(path.join(root, "public/show/set-apart-flyer.png")), false);
+  assert.doesNotMatch(publicCopy, /Building Community Bridges|Solid Rock/);
+  assert.doesNotMatch(publicCopy, /\$15|\$25|\$50|General Admission|Ticket \+/);
+  assert.doesNotMatch(page, /\bhis\b/i);
+  assert.doesNotMatch(config, /Building Community Bridges|Solid Rock/);
+  assert.match(nav, /href: "\/set-apart"/);
+  assert.doesNotMatch(nav, /href: "\/tickets"/);
+  assert.match(redirect, /source: "\/tickets", destination: "\/set-apart"/);
 });
 
 test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {

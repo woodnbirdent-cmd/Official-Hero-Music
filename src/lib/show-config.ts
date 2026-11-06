@@ -14,13 +14,16 @@ export const SHOW = {
   name: "SET APART",
   presenters: "Official Hero Music & WNB Lighting and Sound",
   dateLabel: "Saturday, January 9, 2027",
-  timeLabel: "4–8 PM",
-  venue: "Building Community Bridges",
-  city: "Jefferson City, MO",
-  lineup: ["#Hero", "Nicky Gracious", "OTG Zico", "Worship by Aubrey"],
-  flyer: "/show/set-apart-flyer.png",
-  flyerWidth: 1080,
-  flyerHeight: 1350,
+  timeLabel: "5–9 PM CT",
+  location: "Location TBA",
+  headliner: "#HERO",
+  withLine: "Nicky Gracious · OTG Zico · worship by Aubrey",
+  poster: "/show/set-apart-poster.jpg",
+  posterWidth: 1080,
+  posterHeight: 1350,
+  story: "/show/set-apart-story.jpg",
+  storyWidth: 1080,
+  storyHeight: 1920,
 } as const;
 
 export const TICKET_PERKS = {

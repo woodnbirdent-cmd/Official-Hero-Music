@@ -17,7 +17,15 @@ function escapeHtml(value: string): string {
 }
 
 function eventLines(): string[] {
-  return [SHOW.name, SHOW.presenters, SHOW.dateLabel, SHOW.timeLabel, `${SHOW.venue}, ${SHOW.city}`];
+  return [
+    SHOW.name,
+    `Presented by ${SHOW.presenters}`,
+    `Featuring ${SHOW.headliner}`,
+    `With ${SHOW.withLine}`,
+    SHOW.dateLabel,
+    SHOW.timeLabel,
+    SHOW.location,
+  ];
 }
 
 function paragraph(lines: string[]): string {

@@ -39,7 +39,7 @@ See `.env.example`:
 | `ADMIN_EMAIL_FROM` | From address for those emails. The domain must be verified in Resend. |
 | `TICKET_CAPACITY` | Whole number of SET APART tickets. Checkout stays closed until this is set. |
 | `TICKET_CHECKIN_PASSWORD` | Password for the door page at `/checkin`. |
-| `OWNER_NOTIFY_EMAIL` | Sponsorship notices. Defaults to `woodnbirdent@gmail.com` (Lee / Woodnbird). |
+| `OWNER_NOTIFY_EMAIL` | Sponsorship and volunteer notices. Defaults to `woodnbirdent@gmail.com` (Lee / Woodnbird). |
 
 Membership tables are created on the first account request. `mailing_list` is created the same way (`CREATE TABLE IF NOT EXISTS`) the first time someone uses Join or the merch waitlist, an admin loads the email audience, or someone opens an unsubscribe link. No migration command has to run before merge. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
@@ -49,7 +49,7 @@ Unreleased tracks (Listen, Still There) are listed on `/members/early-access`. S
 
 The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.expired`.
 
-SET APART tickets, check-in, and sponsorships use the same Neon Postgres database. Tables `show_orders` and `show_tickets` are created on first use. There is no separate ticketing vendor. Ticket tiers (name, price, perks, and whether a shirt size is collected) live in `src/lib/show-config.ts`. A paid Checkout is recorded only from the Stripe webhook, which emails one QR code per ticket through Resend. Volunteer sign-ups on the same page are free, stored in `show_orders`, and emailed to the volunteer and to Lee. `/checkin` redeems each code once and flags early access, meet & greet, and shirt size from the perks stored on that ticket. Business sponsorship names and prices in that config file are not final. Community Sponsor is the individual amount. Preview deploys need test Stripe keys (`sk_test_...`); show checkout refuses a live key when `VERCEL_ENV` is not `production`.
+SET APART sponsorships, volunteers, tickets, and check-in use the same Neon Postgres database. Tables `show_orders` and `show_tickets` are created on first use (`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`). There is no separate ticketing vendor. The public page is `/set-apart` (linked in the nav and on Tour; `/tickets` redirects there). It collects sponsorships and volunteer sign-ups and does not list ticket prices or a checkout. Ticket tiers (name, price, perks, and whether a shirt size is collected) stay in `src/lib/show-config.ts` only. Checkout for tickets stays closed until `TICKET_CAPACITY` is set. A paid Checkout is recorded only from the Stripe webhook, which emails one QR code per ticket through Resend. Volunteer sign-ups are free, stored in `show_orders`, and emailed to the volunteer and to Lee. `/checkin` redeems each code once and flags early access, meet & greet, and shirt size from the perks stored on that ticket. Business sponsorship names and prices in that config file are suggested, not final. Community Sponsor is the individual amount ($10, $25, $50, $100, or a custom amount). Copy says sponsorship, never donation. Preview deploys need test Stripe keys (`sk_test_...`); show checkout refuses a live key when `VERCEL_ENV` is not `production`. The public flyer is `public/show/set-apart-poster.jpg` (story crop: `set-apart-story.jpg`).
 
 Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Join and the merch waitlist save the address in `mailing_list` (lowercased, one row per email). Booking and prayer are logged server-side only.
 
@@ -58,6 +58,7 @@ Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lastin
 | Route | Page |
 |-------|------|
 | `/` | Home |
+| `/set-apart` | SET APART sponsorships and volunteers (`/tickets` redirects here) |
 | `/music` | Spotify + Apple embeds |
 | `/videos` | YouTube embeds |
 | `/merch` | Shop coming soon + waitlist |

@@ -1,5 +1,7 @@
 "use client";
 
+// Kept for when ticket sales open. The public show page does not mount this.
+
 import { useState } from "react";
 import { SHIRT_SIZES, TICKET_MAX_QUANTITY, TICKET_TIERS, formatDollars } from "@/lib/show-config";
 import { describePerks } from "@/lib/show-codes";

@@ -4,6 +4,7 @@ import Link from "next/link";
 import BandsintownWidget from "@/components/BandsintownWidget";
 import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
 import { BANDSINTOWN, SITE } from "@/lib/constants";
+import { SHOW } from "@/lib/show-config";
 
 export const metadata: Metadata = {
   title: "Tour",
@@ -24,13 +25,15 @@ export default function TourPage() {
 
         <section className="mb-10 border border-hero-surface bg-hero-dark p-6">
           <p className="section-label mb-2">Next show</p>
-          <h2 className="section-heading text-4xl">SET APART</h2>
+          <h2 className="section-heading text-4xl">{SHOW.name}</h2>
           <p className="mt-3 text-sm text-hero-light">
-            Saturday, January 9, 2027 · 4–8 PM · Building Community Bridges, Jefferson City, MO
+            {SHOW.dateLabel} · {SHOW.timeLabel} · {SHOW.location}
           </p>
-          <p className="mt-2 text-sm text-hero-muted">Official Hero Music & WNB Lighting and Sound present.</p>
-          <Link href="/tickets" className="btn-primary mt-5">
-            Tickets
+          <p className="mt-2 text-sm text-hero-muted">
+            {SHOW.presenters} present {SHOW.headliner}, with {SHOW.withLine}.
+          </p>
+          <Link href="/set-apart" className="btn-primary mt-5">
+            Sponsorships and volunteers
           </Link>
         </section>
 
@@ -79,7 +82,7 @@ export default function TourPage() {
                 More dates drop here
               </h3>
               <p className="mb-6 max-w-xl text-sm leading-relaxed text-hero-light">
-                SET APART is on sale on this site. Other cities still land on Bandsintown,
+                {SHOW.name} is listed on this site. Other cities still land on Bandsintown,
                 or join the mailing list for a direct notify.
               </p>
               <div className="flex flex-wrap gap-3">
