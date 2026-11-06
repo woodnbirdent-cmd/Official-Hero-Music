@@ -11,7 +11,7 @@ import {
   ticketCapacity,
   ticketTier,
 } from "./show-config.ts";
-import { ownerSponsorshipEmail, sponsorshipReceiptEmail, ticketEmail } from "./show-copy.ts";
+import { ownerSponsorshipEmail, ownerVolunteerEmail, sponsorshipReceiptEmail, ticketEmail, volunteerConfirmationEmail } from "./show-copy.ts";
 import { showOrdersToCsv } from "./show-csv.ts";
 import { requestIsSameOrigin } from "./show-http.ts";
 import { parseDollarsToCents, parseSponsorshipFields, parseTicketFields, parseVolunteerFields, shirtSizeForTier } from "./show-input.ts";
@@ -408,6 +408,55 @@ test("volunteer sign-up accepts shifts and drops a filled honeypot", () => {
     }).ok,
     false,
   );
+  const outreach = parseVolunteerFields({
+    name: "Bea Outreach",
+    email: "bea@example.com",
+    phone: "573-555-0188",
+    shifts: ["before"],
+    roles: ["outreach"],
+    roleOther: "",
+    shirtSize: "",
+    notes: "I can hand out flyers this week.",
+    companyWebsite: "",
+  });
+  assert.equal(outreach.ok, true);
+  if (outreach.ok) {
+    assert.equal(outreach.value.availability, "Before the show (community outreach)");
+    assert.equal(outreach.value.roleInterest, "Community outreach");
+    assert.doesNotMatch(outreach.value.availability, /Setup|During the show|Teardown/);
+    const order = {
+      kind: "volunteer",
+      buyerName: outreach.value.name,
+      buyerEmail: outreach.value.email,
+      phone: outreach.value.phone,
+      availability: outreach.value.availability,
+      roleInterest: outreach.value.roleInterest,
+      shirtSize: "",
+      notes: outreach.value.notes,
+      perks: "",
+      tickets: [],
+      tierName: "",
+      quantity: 1,
+      stripePaymentIntentId: "",
+      amountCents: 0,
+      status: "received",
+      businessName: "",
+      logoDelivery: "",
+      createdAt: new Date("2027-01-01T00:00:00Z"),
+    } as ShowOrder;
+    const confirmation = volunteerConfirmationEmail(order);
+    const owner = ownerVolunteerEmail(order);
+    const csv = showOrdersToCsv([order]);
+    for (const body of [confirmation.text, owner.text, csv]) {
+      assert.match(body, /Before the show \(community outreach\)/);
+      assert.match(body, /Community outreach/);
+      assert.doesNotMatch(body, /donat/i);
+    }
+  }
+  const form = fs.readFileSync(path.join(root, "src/components/show/VolunteerForm.tsx"), "utf8");
+  assert.match(form, /experiencing homelessness and others who need it/);
+  assert.match(form, /VOLUNTEER_ROLES/);
+  assert.match(form, /VOLUNTEER_SHIFTS/);
 });
 
 test("logo bytes reject a text file", () => {
