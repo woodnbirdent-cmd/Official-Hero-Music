@@ -18,6 +18,17 @@ function checkedInStatus(order: ShowOrder): string {
     .join("; ");
 }
 
+function perksCell(order: ShowOrder): string {
+  if (order.kind === "sponsorship") {
+    return order.perks
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join("; ");
+  }
+  return describePerks(parsePerkIds(order.perks), order.kind === "ticket" ? order.shirtSize : "").join("; ");
+}
+
 function kindLabel(order: ShowOrder): string {
   if (order.kind === "sponsorship") return "Sponsorship";
   if (order.kind === "volunteer") return "Volunteer";
@@ -57,7 +68,7 @@ export function showOrdersToCsv(orders: ShowOrder[]): string {
     order.buyerEmail,
     order.tierName,
     order.quantity,
-    describePerks(parsePerkIds(order.perks), order.kind === "ticket" ? order.shirtSize : "").join("; "),
+    perksCell(order),
     order.shirtSize,
     order.stripePaymentIntentId,
     order.tickets.map((ticket) => ticket.code).join("; "),

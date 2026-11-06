@@ -267,9 +267,10 @@ test("sponsorship payment and invoice are saved and Lee is emailed", async (t) =
     {
       status: "unpaid",
       sponsorType: "business",
-      tierId: "sponsor-100",
-      tierName: "Sponsor",
-      amountCents: 10000,
+      tierId: "gold",
+      tierName: "Gold",
+      perks: "6 complimentary tickets",
+      amountCents: 75000,
       buyerName: "Pat Business",
       buyerEmail: "pat@example.com",
       phone: "573-555-0100",

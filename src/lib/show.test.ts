@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { checkinFlags, describePerks, parseTicketCode } from "./show-codes.ts";
 import {
+  BUSINESS_SPONSOR_TIERS,
   COMMUNITY_SPONSOR,
   TICKET_TIERS,
   formatDollars,
@@ -136,8 +137,9 @@ test("community sponsorship amount and business tier price come from config", ()
     logoDelivery: "",
     hasLogo: false,
   } }).ok, false);
+  assert.doesNotMatch(COMMUNITY_SPONSOR.summary, /LED|booth|complimentary|deliverable/i);
   const business = parseSponsorshipFields({
-    tierId: "sponsor-250",
+    tierId: "gold",
     payment: "invoice",
     amount: "1",
     name: "Lee Contact",
@@ -148,7 +150,26 @@ test("community sponsorship amount and business tier price come from config", ()
     hasLogo: false,
   });
   assert.equal(business.ok, true);
-  if (business.ok) assert.equal(business.value.amountCents, 25000);
+  if (business.ok) {
+    assert.equal(business.value.tierName, "Gold");
+    assert.equal(business.value.amountCents, 75000);
+    assert.equal(business.value.slots, "2–3 slots");
+    assert.match(business.value.perks, /6 complimentary tickets/);
+  }
+  assert.equal(
+    parseSponsorshipFields({
+      tierId: "sponsor-250",
+      payment: "invoice",
+      amount: "1",
+      name: "Lee Contact",
+      email: "lee@example.com",
+      phone: "(573) 555-0100",
+      businessName: "WNB Lighting",
+      logoDelivery: "email",
+      hasLogo: false,
+    }).ok,
+    false,
+  );
   assert.equal(parseDollarsToCents("18.50"), 1850);
   assert.equal(parseDollarsToCents("18.5"), 1850);
   assert.equal(parseDollarsToCents("1.234"), null);
@@ -222,6 +243,20 @@ test("emails and csv say sponsorship and name the perks", () => {
   const notice = ownerSponsorshipEmail({ ...sponsor, status: "unpaid" });
   assert.match(notice.text, /unpaid/i);
   assert.doesNotMatch(notice.text, /donat|deductible/i);
+  const gold = ownerSponsorshipEmail({
+    ...sponsor,
+    status: "paid",
+    sponsorType: "business",
+    tierId: "gold",
+    tierName: "Gold",
+    amountCents: 75000,
+    businessName: "WNB Lighting",
+    perks: "Logo on the flyer and in the LED rotation\n6 complimentary tickets",
+  });
+  assert.match(gold.text, /Gold/);
+  assert.match(gold.text, /2–3 slots/);
+  assert.match(gold.text, /complimentary/);
+  assert.doesNotMatch(gold.text, /donat|deductible|complementary/i);
   const csv = showOrdersToCsv([
     {
       ...order,
@@ -281,6 +316,24 @@ test("public show page collects sponsorships and volunteers without selling tick
   const nav = fs.readFileSync(path.join(root, "src/lib/constants.ts"), "utf8");
   const redirect = fs.readFileSync(path.join(root, "next.config.ts"), "utf8");
   const publicCopy = `${page}\n${tour}`;
+  assert.deepEqual(
+    BUSINESS_SPONSOR_TIERS.map((tier) => ({ name: tier.name, priceCents: tier.priceCents, slots: tier.slots })),
+    [
+      { name: "Presenting", priceCents: 150000, slots: "1 slot" },
+      { name: "Gold", priceCents: 75000, slots: "2–3 slots" },
+      { name: "Silver", priceCents: 35000, slots: "4–6 slots" },
+    ],
+  );
+  const packageCopy = BUSINESS_SPONSOR_TIERS.flatMap((tier) => [...tier.perks]).join("\n");
+  assert.match(packageCopy, /10 complimentary tickets/);
+  assert.match(packageCopy, /SET APART presented by ___/);
+  assert.doesNotMatch(packageCopy, /complementary/i);
+  assert.equal(fs.existsSync(path.join(root, "src/lib/show-config.ts")), true);
+  const configText = config;
+  assert.doesNotMatch(configText, /sponsor-100|sponsor-250|sponsor-500|sponsor-1000|sponsor-1500|"Partner"|"Patron"|"Title"/);
+  const forms = fs.readFileSync(path.join(root, "src/components/show/SponsorshipForms.tsx"), "utf8");
+  assert.match(forms, /tier\.perks/);
+  assert.match(forms, /tier\.slots/);
   assert.match(page, /SponsorshipForms/);
   assert.match(page, /VolunteerForm/);
   assert.doesNotMatch(page, /TicketPurchase/);

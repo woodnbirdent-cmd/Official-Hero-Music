@@ -1,5 +1,5 @@
 import { describePerks, parsePerkIds, ticketCheckinUrl } from "./show-codes";
-import { SHOW, formatDollars } from "./show-config";
+import { SHOW, businessSponsorTier, formatDollars } from "./show-config";
 import type { ShowOrder, ShowTicket } from "./show-types";
 
 export type EmailBody = {
@@ -72,14 +72,28 @@ export function ticketEmail(order: ShowOrder, tickets: ShowTicket[]): EmailBody 
   return { subject: `Your ${SHOW.name} tickets`, text, html };
 }
 
+function sponsorshipPackageLines(order: ShowOrder): string[] {
+  const tier = businessSponsorTier(order.tierId);
+  const stored = order.perks
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const perks = stored.length > 0 ? stored : tier ? [...tier.perks] : [];
+  return [
+    `Sponsorship: ${order.tierName}`,
+    tier ? `Slots: ${tier.slots}` : "",
+    `Amount: ${formatDollars(order.amountCents)}`,
+    ...(perks.length > 0 ? ["Includes:", ...perks.map((perk) => `- ${perk}`)] : []),
+  ].filter((line) => line !== "");
+}
+
 export function sponsorshipReceiptEmail(order: ShowOrder): EmailBody {
   const lines = [
     `Thank you for your ${SHOW.name} sponsorship.`,
     "",
     order.businessName ? `Business: ${order.businessName}` : "",
     `Name: ${order.buyerName}`,
-    `Sponsorship: ${order.tierName}`,
-    `Amount: ${formatDollars(order.amountCents)}`,
+    ...sponsorshipPackageLines(order),
     order.stripePaymentIntentId ? `Payment: ${order.stripePaymentIntentId}` : "",
     "",
     "This confirms we received your sponsorship payment.",
@@ -97,8 +111,7 @@ export function sponsorshipRequestEmail(order: ShowOrder): EmailBody {
     "",
     `Business: ${order.businessName}`,
     `Contact: ${order.buyerName}`,
-    `Sponsorship: ${order.tierName}`,
-    `Amount: ${formatDollars(order.amountCents)}`,
+    ...sponsorshipPackageLines(order),
     "Payment status: unpaid",
     "",
     "This request stays unpaid until an invoice is sent or a check arrives.",
@@ -162,8 +175,7 @@ export function ownerSponsorshipEmail(order: ShowOrder): EmailBody {
     `New ${SHOW.name} sponsorship`,
     "",
     `Status: ${paid ? "paid" : "unpaid — invoice or check"}`,
-    `Tier: ${order.tierName}`,
-    `Amount: ${formatDollars(order.amountCents)}`,
+    ...sponsorshipPackageLines(order),
     `Name: ${order.buyerName}`,
     `Email: ${order.buyerEmail}`,
     order.phone ? `Phone: ${order.phone}` : "",

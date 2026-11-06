@@ -90,14 +90,46 @@ export function ticketCapacity(env: NodeJS.ProcessEnv = process.env): number | n
 }
 
 /**
- * Business sponsorship tiers. Names and prices are configuration, not a final offer.
+ * Approved business sponsorship packages. The public page, checkout, and emails read this list.
  */
 export const BUSINESS_SPONSOR_TIERS = [
-  { id: "sponsor-100", name: "Sponsor", priceCents: 10000 },
-  { id: "sponsor-250", name: "Partner", priceCents: 25000 },
-  { id: "sponsor-500", name: "Patron", priceCents: 50000 },
-  { id: "sponsor-1000", name: "Presenting", priceCents: 100000 },
-  { id: "sponsor-1500", name: "Title", priceCents: 150000 },
+  {
+    id: "presenting",
+    name: "Presenting",
+    priceCents: 150000,
+    slots: "1 slot",
+    perks: [
+      "“SET APART presented by ___” on flyers and posts",
+      "Logo on the LED all night",
+      "2 stage mentions",
+      "A booth",
+      "10 complimentary tickets",
+      "2 meet-and-greet passes",
+    ],
+  },
+  {
+    id: "gold",
+    name: "Gold",
+    priceCents: 75000,
+    slots: "2–3 slots",
+    perks: [
+      "Logo on the flyer and in the LED rotation",
+      "1 stage mention",
+      "A booth",
+      "6 complimentary tickets",
+    ],
+  },
+  {
+    id: "silver",
+    name: "Silver",
+    priceCents: 35000,
+    slots: "4–6 slots",
+    perks: [
+      "Logo in the LED rotation",
+      "Name on the flyer",
+      "4 complimentary tickets",
+    ],
+  },
 ] as const;
 
 export type BusinessSponsorTier = (typeof BUSINESS_SPONSOR_TIERS)[number];
@@ -109,7 +141,7 @@ export function businessSponsorTier(id: string): BusinessSponsorTier | undefined
 export const COMMUNITY_SPONSOR = {
   id: "community",
   name: "Community Sponsor",
-  summary: "For individuals. Choose a preset or enter an amount.",
+  summary: "For individuals, or anyone who wants to chip in. A thank-you sponsorship.",
   presetsCents: [1000, 2500, 5000, 10000] as const,
   minCents: 100,
   maxCents: 1_000_000,

@@ -115,9 +115,10 @@ export default async function SetApartPage({
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#ff4b4b]">Sponsorship</p>
           <h2 className="mt-3 font-display text-5xl tracking-wide text-[#f6efe4] sm:text-6xl">Sponsor the show</h2>
           <p className="mt-4 max-w-2xl text-[#f6efe4]/80">
-            Community Sponsor is for individuals. Business sponsorships include a logo. Suggested business
-            tiers can change. A receipt goes out by email after a card payment is confirmed. Choosing invoice
-            or check records the request and does not charge a card.
+            Community Sponsor is for individuals, or anyone who wants to chip in. Business packages are
+            Presenting, Gold, and Silver. A logo is collected with a business sponsorship. A receipt goes out
+            by email after a card payment is confirmed. Choosing invoice or check records the request and does
+            not charge a card.
           </p>
           <div className="mt-8">
             <SponsorshipForms />

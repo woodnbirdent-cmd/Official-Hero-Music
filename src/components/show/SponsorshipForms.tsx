@@ -129,22 +129,33 @@ export default function SponsorshipForms() {
       <form onSubmit={onBusiness} className="card-surface space-y-4">
         <p className="section-label">Businesses</p>
         <h3 className="text-2xl font-black uppercase text-hero-accent">Business sponsorship</h3>
-        <p className="text-sm text-hero-light">Suggested tiers. Names and amounts can change.</p>
+        <p className="text-sm text-hero-light">Choose a package. The price is the sponsorship amount.</p>
         <fieldset className="space-y-3">
-          <legend className="section-label mb-3">Tier</legend>
+          <legend className="section-label mb-3">Package</legend>
           {BUSINESS_SPONSOR_TIERS.map((tier) => (
-            <label key={tier.id} className="flex items-center justify-between gap-3 border border-hero-gray px-4 py-3">
-              <span className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  name="business-tier"
-                  value={tier.id}
-                  checked={tierId === tier.id}
-                  onChange={() => setTierId(tier.id)}
-                />
-                <span className="font-bold uppercase tracking-wide">{tier.name}</span>
+            <label key={tier.id} className="block border border-hero-gray px-4 py-4">
+              <span className="flex items-start justify-between gap-3">
+                <span className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="business-tier"
+                    value={tier.id}
+                    className="mt-1"
+                    checked={tierId === tier.id}
+                    onChange={() => setTierId(tier.id)}
+                  />
+                  <span>
+                    <span className="block font-bold uppercase tracking-wide">{tier.name}</span>
+                    <span className="mt-1 block text-xs uppercase tracking-wider text-hero-muted">{tier.slots}</span>
+                  </span>
+                </span>
+                <span className="font-bold">{publicDollars(tier.priceCents)}</span>
               </span>
-              <span>{publicDollars(tier.priceCents)}</span>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-hero-light">
+                {tier.perks.map((perk) => (
+                  <li key={perk}>{perk}</li>
+                ))}
+              </ul>
             </label>
           ))}
         </fieldset>

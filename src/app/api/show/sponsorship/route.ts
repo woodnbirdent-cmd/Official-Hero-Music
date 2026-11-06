@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       sponsorType: value.sponsorType,
       tierId: value.tierId,
       tierName: value.tierName,
+      perks: value.perks,
       amountCents: value.amountCents,
       buyerName: value.buyerName,
       buyerEmail: value.buyerEmail,
@@ -115,9 +116,10 @@ export async function POST(request: Request) {
             unit_amount: value.amountCents,
             product_data: {
               name: `${SHOW.name} sponsorship — ${value.tierName}`,
-              description: value.businessName
-                ? `${value.tierName} sponsorship for ${value.businessName}`.slice(0, 400)
-                : `${value.tierName} sponsorship`.slice(0, 400),
+              description: (value.businessName
+                ? `${value.tierName} sponsorship${value.slots ? `, ${value.slots}` : ""} for ${value.businessName}`
+                : `${value.tierName} sponsorship${value.slots ? `, ${value.slots}` : ""}`
+              ).slice(0, 400),
             },
           },
         },

@@ -110,6 +110,8 @@ export type SponsorshipRequest = {
   phone: string;
   businessName: string;
   logoDelivery: "" | "upload" | "email";
+  slots: string;
+  perks: string;
 };
 
 export function parseSponsorshipFields(input: {
@@ -154,6 +156,8 @@ export function parseSponsorshipFields(input: {
         phone: "",
         businessName: "",
         logoDelivery: "",
+        slots: "",
+        perks: "",
       },
     };
   }
@@ -181,6 +185,8 @@ export function parseSponsorshipFields(input: {
       phone,
       businessName,
       logoDelivery,
+      slots: tier.slots,
+      perks: tier.perks.join("\n"),
     },
   };
 }

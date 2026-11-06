@@ -372,6 +372,7 @@ export type NewSponsorshipOrder = {
   logoBytes: Buffer | null;
   siteOrigin: string;
   expiresAt: Date | null;
+  perks?: string;
 };
 
 export async function createSponsorshipOrder(input: NewSponsorshipOrder, pool?: Pool): Promise<number> {
@@ -379,13 +380,13 @@ export async function createSponsorshipOrder(input: NewSponsorshipOrder, pool?: 
   await ensureShowTables(db);
   const inserted = await db.query<{ id: number }>(
     `INSERT INTO show_orders (
-       kind, sponsor_type, status, buyer_name, buyer_email, tier_id, tier_name,
+       kind, sponsor_type, status, buyer_name, buyer_email, tier_id, tier_name, perks,
        quantity, unit_amount_cents, amount_cents, phone, business_name,
        logo_delivery, logo_filename, logo_bytes, site_origin, expires_at
      ) VALUES (
-       'sponsorship', $1, $2, $3, $4, $5, $6,
-       1, $7, $7, $8, $9,
-       $10, $11, $12, $13, $14
+       'sponsorship', $1, $2, $3, $4, $5, $6, $7,
+       1, $8, $8, $9, $10,
+       $11, $12, $13, $14, $15
      ) RETURNING id`,
     [
       input.sponsorType,
@@ -394,6 +395,7 @@ export async function createSponsorshipOrder(input: NewSponsorshipOrder, pool?: 
       input.buyerEmail,
       input.tierId,
       input.tierName,
+      input.perks ?? "",
       input.amountCents,
       input.phone,
       input.businessName,
