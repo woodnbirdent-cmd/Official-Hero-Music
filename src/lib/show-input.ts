@@ -221,7 +221,6 @@ export function parseVolunteerFields(input: {
   shifts: unknown;
   roles: unknown;
   roleOther: unknown;
-  shirtSize: unknown;
   notes: unknown;
   companyWebsite: unknown;
 }): { ok: true; value: VolunteerRequest } | { ok: false; error: string } {
@@ -251,11 +250,6 @@ export function parseVolunteerFields(input: {
   }
   if (roles.length === 0 && !roleOther) return { ok: false, error: "Choose a role, or tell us another way you can help." };
   const roleInterest = [...roles.map((role) => role.label), ...(roleOther ? [`Other: ${roleOther}`] : [])].join("; ");
-  let shirtSize = "";
-  if (typeof input.shirtSize === "string" && input.shirtSize.trim()) {
-    if (!(SHIRT_SIZES as readonly string[]).includes(input.shirtSize)) return { ok: false, error: "Choose a shirt size." };
-    shirtSize = input.shirtSize;
-  }
   const notes = cleanNotes(input.notes);
   if (notes == null) return { ok: false, error: "Notes are too long." };
   return {
@@ -267,7 +261,7 @@ export function parseVolunteerFields(input: {
       phone,
       availability: shifts.map((shift) => shift.label).join("; "),
       roleInterest,
-      shirtSize,
+      shirtSize: "",
       notes,
     },
   };

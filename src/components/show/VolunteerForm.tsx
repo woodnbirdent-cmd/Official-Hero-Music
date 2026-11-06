@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { SHIRT_SIZES, VOLUNTEER_ROLES, VOLUNTEER_SHIFTS } from "@/lib/show-config";
+import { VOLUNTEER_ROLES, VOLUNTEER_SHIFTS } from "@/lib/show-config";
 
 export default function VolunteerForm() {
   const [pending, setPending] = useState(false);
@@ -94,17 +94,6 @@ export default function VolunteerForm() {
           <input className="input-field" name="roleOther" maxLength={120} />
         </label>
       </fieldset>
-      <label className="block text-sm">
-        <span className="section-label mb-2 block">Shirt size, optional</span>
-        <select className="input-field" name="shirtSize" defaultValue="">
-          <option value="">No preference</option>
-          {SHIRT_SIZES.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-      </label>
       <label className="block text-sm">
         <span className="section-label mb-2 block">Notes, optional</span>
         <textarea className="input-field min-h-28" name="notes" maxLength={1000} />

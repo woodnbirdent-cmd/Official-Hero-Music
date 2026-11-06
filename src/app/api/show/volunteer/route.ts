@@ -27,7 +27,6 @@ export async function POST(request: Request) {
     shifts: form.getAll("availability").filter((item): item is string => typeof item === "string"),
     roles: form.getAll("role").filter((item): item is string => typeof item === "string"),
     roleOther: text("roleOther"),
-    shirtSize: text("shirtSize"),
     notes: text("notes"),
     companyWebsite: text("company_website"),
   });
