@@ -4,6 +4,7 @@ import Link from "next/link";
 import BandsintownWidget from "@/components/BandsintownWidget";
 import { ParallaxLayer, ParallaxRoot } from "@/components/parallax";
 import { BANDSINTOWN, SITE } from "@/lib/constants";
+import { SHOW } from "@/lib/show-config";
 
 export const metadata: Metadata = {
   title: "Tour",
@@ -21,6 +22,20 @@ export default function TourPage() {
           ready — track on Bandsintown or join the list and we&apos;ll hit you when shows
           drop.
         </p>
+
+        <section className="mb-10 border border-hero-surface bg-hero-dark p-6">
+          <p className="section-label mb-2">Next show</p>
+          <h2 className="section-heading text-4xl">{SHOW.name}</h2>
+          <p className="mt-3 text-sm text-hero-light">
+            {SHOW.dateLabel} · {SHOW.timeLabel} · {SHOW.location}
+          </p>
+          <p className="mt-2 text-sm text-hero-muted">
+            {SHOW.presenters} present {SHOW.headliner}, with {SHOW.withLine}.
+          </p>
+          <Link href="/set-apart" className="btn-primary mt-5">
+            Sponsorships and volunteers
+          </Link>
+        </section>
 
         <div className="mb-12 flex flex-wrap gap-3">
           <a
@@ -64,12 +79,11 @@ export default function TourPage() {
             <div className="mt-6 border border-hero-surface bg-hero-dark p-6">
               <p className="section-label mb-3">Empty calendar</p>
               <h3 className="mb-3 text-xl font-black uppercase tracking-tight text-hero-accent">
-                Dates drop here
+                More dates drop here
               </h3>
               <p className="mb-6 max-w-xl text-sm leading-relaxed text-hero-light">
-                No shows on the books is still a premium lane. Track {SITE.artist} on
-                Bandsintown for city requests and on-sale alerts, or join the mailing list
-                for a direct notify.
+                {SHOW.name} is listed on this site. Other cities still land on Bandsintown,
+                or join the mailing list for a direct notify.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/join" className="btn-primary">

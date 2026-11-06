@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/listen", destination: "/music", permanent: false },
       { source: "/support", destination: "/join", permanent: true },
+      { source: "/tickets", destination: "/set-apart", permanent: false },
     ];
   },
   async headers() {
@@ -28,6 +29,14 @@ const nextConfig: NextConfig = {
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
           { key: "Referrer-Policy", value: "no-referrer" },
         ],
+      },
+      {
+        source: "/checkin",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/checkin/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {
         source: "/api/auth/:path*",
