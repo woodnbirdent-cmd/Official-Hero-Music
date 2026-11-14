@@ -21,7 +21,13 @@ export default function BookingForm() {
   }
 
   return (
-    <form action={action} className="card-surface space-y-4">
+    <form action={action} className="card-surface relative space-y-4">
+      <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
+        <label>
+          Company website
+          <input type="text" name="company_website" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="book-name" className="mb-2 block text-xs font-bold uppercase tracking-wider">

@@ -40,6 +40,7 @@ See `.env.example`:
 | `TICKET_CAPACITY` | Whole number of SET APART tickets. Checkout stays closed until this is set. |
 | `TICKET_CHECKIN_PASSWORD` | Password for the door page at `/checkin`. |
 | `OWNER_NOTIFY_EMAIL` | Sponsorship and volunteer notices. Defaults to `woodnbirdent@gmail.com` (Lee / Woodnbird). |
+| `BOOKING_NOTIFY_EMAILS` | Book #Hero notices. Defaults to `woodnbirdent@gmail.com,hero@officialheromusic.com`. Reply-to is the requester. |
 
 Membership tables are created on the first account request. `mailing_list` is created the same way (`CREATE TABLE IF NOT EXISTS`) the first time someone uses Join or the merch waitlist, an admin loads the email audience, or someone opens an unsubscribe link. No migration command has to run before merge. Paid plans use inline Stripe prices ($7 and $15 monthly), so no Price IDs are required. Enable the Stripe customer portal once in the Dashboard so “Manage billing” can open.
 
@@ -51,7 +52,7 @@ The Stripe webhook at `POST /api/stripe/webhook` needs `customer.subscription.cr
 
 SET APART sponsorships, volunteers, tickets, and check-in use the same Neon Postgres database. Tables `show_orders` and `show_tickets` are created on first use (`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`). There is no separate ticketing vendor. The public page is `/set-apart` (linked in the nav and on Tour; `/tickets` redirects there). It collects sponsorships and volunteer sign-ups and does not list ticket prices or a checkout. Ticket tiers (name, price, perks, and whether a shirt size is collected) stay in `src/lib/show-config.ts` only. Checkout for tickets stays closed until `TICKET_CAPACITY` is set. A paid Checkout is recorded only from the Stripe webhook, which emails one QR code per ticket through Resend. Volunteer sign-ups are free, stored in `show_orders`, and emailed to the volunteer and to Lee. `/checkin` redeems each code once and flags early access, meet & greet, and shirt size from the perks stored on that ticket. Business sponsorship packages are Presenting ($1,500, 1 slot), Gold ($750, 2–3 slots), and Silver ($350, 4–6 slots). Community Sponsor is $10, $25, $50, $100, or a custom amount, with no extra deliverables. Copy says sponsorship, never donation. Preview deploys need test Stripe keys (`sk_test_...`); show checkout refuses a live key when `VERCEL_ENV` is not `production`. The public flyer is `public/show/set-apart-poster.jpg` (story crop: `set-apart-story.jpg`).
 
-Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lasting success UI. Join and the merch waitlist save the address in `mailing_list` (lowercased, one row per email). Booking and prayer are logged server-side only.
+Forms (Join, Booking, Prayer, Merch list) use server actions and show lasting success UI. Join and the merch list save the address in `mailing_list` (lowercased, one row per email, source `join` or `waitlist`). That table is the Mailing list group on `/admin/email`. Account sign-up at `/sign-up` is separate and stays in the member groups. Booking requests are saved in `booking_requests` (created on first use), listed at `/admin/bookings`, and emailed from `ADMIN_EMAIL_FROM` with reply-to set to the requester. Prayer requests are logged server-side only.
 
 ## Pages / routes
 
@@ -61,7 +62,7 @@ Forms (Join, Booking, Prayer, Merch waitlist) use server actions and show lastin
 | `/set-apart` | SET APART sponsorships and volunteers (`/tickets` redirects here) |
 | `/music` | Spotify + Apple embeds |
 | `/videos` | YouTube embeds |
-| `/merch` | Shop coming soon + waitlist |
+| `/merch` | Shop, plus an email list for new gear |
 | `/community` | Give-back / testimony / prayer form |
 | `/join` | Membership tiers and mailing list (`/support` redirects here) |
 | `/members` | Member updates, early access, VIP downloads |

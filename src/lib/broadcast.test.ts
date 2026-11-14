@@ -517,6 +517,8 @@ test("join and waitlist addresses are stored, and the admin send stays gated", (
   assert.match(forms, /saveMailingSignup/);
   assert.match(forms, /source: "join"/);
   assert.match(forms, /source: "waitlist"/);
+  const merch = readFileSync(join(root, "src/app/merch/page.tsx"), "utf8");
+  assert.match(merch, /MerchWaitlistForm/);
   assert.match(forms, /void payload/);
   assert.equal(forms.includes("INSERT"), false);
   assert.equal(forms.includes("resend.com"), false);
