@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import MerchWaitlistForm from "@/components/MerchWaitlistForm";
 import { formatMoney, MERCH_PRODUCTS } from "@/lib/merch";
 
 export const metadata: Metadata = {
@@ -42,6 +43,15 @@ export default function MerchPage() {
           </li>
         ))}
       </ul>
+
+      <section className="card-surface mt-16" aria-label="Merch list">
+        <p className="section-label mb-3">Updates</p>
+        <h2 className="section-heading mb-2 text-2xl">Merch list</h2>
+        <p className="mb-6 text-hero-light">
+          Drop your email for new gear. No account required.
+        </p>
+        <MerchWaitlistForm />
+      </section>
 
       <section className="mt-16 border border-dashed border-hero-gray p-6" aria-label="Music downloads">
         <p className="section-label mb-3">Downloads</p>

@@ -1,5 +1,6 @@
 "use server";
 
+import { acceptBooking } from "@/lib/booking-store";
 import { normalizeEmail } from "@/lib/broadcast";
 import { saveMailingSignup } from "@/lib/mailing-list";
 
@@ -28,7 +29,8 @@ async function persistSubmission(
   payload: Record<string, string>
 ): Promise<void> {
   // Log the form type only. Do not log names, emails, or messages.
-  // Join and the merch waitlist are saved before this runs. Booking and prayer are not stored.
+  // Join and the merch waitlist are saved before this runs. Prayer is not stored.
+  // Booking is saved in booking_requests and is not handled here.
   console.log(`[#Hero form:${type}] received`);
   void payload;
   // Simulate async persistence
@@ -63,23 +65,27 @@ export async function submitBooking(
   formData: FormData
 ): Promise<FormState> {
   try {
-    const name = requireField(formData.get("name"), "Name");
-    const email = requireField(formData.get("email"), "Email");
-    const org = String(formData.get("org") || "").trim();
-    const date = String(formData.get("date") || "").trim();
-    const message = requireField(formData.get("message"), "Message");
-    if (!email.includes("@")) throw new Error("Enter a valid email");
-    await persistSubmission("booking", { name, email, org, date, message });
+    const saved = await acceptBooking({
+      name: formData.get("name"),
+      email: formData.get("email"),
+      org: formData.get("org"),
+      date: formData.get("date"),
+      message: formData.get("message"),
+      companyWebsite: formData.get("company_website"),
+    });
+    if (!saved.ok) {
+      return { ok: false, message: "", error: saved.error };
+    }
     return {
       ok: true,
       message:
         "Booking request received. The team will follow up as soon as possible.",
     };
-  } catch (e) {
+  } catch {
     return {
       ok: false,
       message: "",
-      error: e instanceof Error ? e.message : "Something went wrong",
+      error: "Something went wrong",
     };
   }
 }
@@ -116,7 +122,7 @@ export async function submitMerchWaitlist(
     await persistSubmission("merch-waitlist", { email });
     return {
       ok: true,
-      message: "You're on the merch waitlist. We'll hit you when the shop drops.",
+      message: "You're on the merch list. We'll email you about new drops.",
     };
   } catch (e) {
     return {
