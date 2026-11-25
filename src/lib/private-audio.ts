@@ -1,5 +1,6 @@
 import "server-only";
-import { BlobNotFoundError, get, head } from "@vercel/blob";
+import { BlobNotFoundError, del, get, head } from "@vercel/blob";
+import { isUnreleasedPathname } from "@/lib/unreleased-tracks";
 
 export function privateBlobConfigured(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
@@ -39,4 +40,16 @@ export async function openPrivateAudio(pathname: string, range: string | undefin
     useCache: false,
     headers: range ? { range } : undefined,
   });
+}
+
+/** Deletes one catalog object. A missing file is already gone. Never deletes any other path. */
+export async function deletePrivateAudio(pathname: string): Promise<void> {
+  if (!privateBlobConfigured()) return;
+  if (!isUnreleasedPathname(pathname)) return;
+  try {
+    await del(pathname);
+  } catch (error) {
+    if (error instanceof BlobNotFoundError) return;
+    throw error;
+  }
 }

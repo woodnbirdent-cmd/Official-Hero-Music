@@ -1,12 +1,15 @@
 /**
- * Unreleased member tracks. Audio bytes live in a private Vercel Blob store.
- * Never commit MP3s. Playback goes through GET /api/stream/[trackId].
+ * Unreleased member tracks. The live list is the unreleased_tracks table.
+ * This array is only the one-time seed (Listen, Still There) and the fallback
+ * when the database cannot be read. Audio bytes live in a private Vercel Blob
+ * store. Never commit MP3s. Playback goes through GET /api/stream/[trackId].
  */
 export type UnreleasedTrack = {
   id: string;
   title: string;
   artist: string;
   duration: string;
+  note: string;
   pathname: string;
 };
 
@@ -16,6 +19,7 @@ export const UNRELEASED_TRACKS: readonly UnreleasedTrack[] = [
     title: "Listen",
     artist: "#Hero",
     duration: "3:00",
+    note: "",
     pathname: "unreleased/listen.mp3",
   },
   {
@@ -23,19 +27,32 @@ export const UNRELEASED_TRACKS: readonly UnreleasedTrack[] = [
     title: "Still There",
     artist: "#Hero",
     duration: "1:25",
+    note: "",
     pathname: "unreleased/still-there.mp3",
   },
 ];
 
 export const UNRELEASED_CONTENT_TYPES = ["audio/mpeg", "audio/mp3"] as const;
 
-/** High-bitrate MP3s of these lengths stay well under this cap. */
-export const MAX_UNRELEASED_BYTES = 30 * 1024 * 1024;
+/** A long high-bitrate MP3 still fits. Single presigned PUT, not multipart. */
+export const MAX_UNRELEASED_BYTES = 80 * 1024 * 1024;
+
+export const MAX_TRACK_TITLE_LENGTH = 80;
+
+export const MAX_TRACK_NOTE_LENGTH = 240;
+
+export const MAX_TRACK_ID_LENGTH = 48;
+
+export const MAX_UNRELEASED_TRACKS = 100;
 
 /** Short-lived admin upload grant. The stream route never hands this URL out. */
 export const UNRELEASED_UPLOAD_TTL_MS = 10 * 60 * 1000;
 
 const STREAM_TIERS = new Set(["supporter", "vip"]);
+
+const TRACK_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const DURATION = /^(?:\d{1,3}:[0-5]\d|[0-9]:[0-5]\d:[0-5]\d)$/;
 
 const tracksById = new Map(UNRELEASED_TRACKS.map((track) => [track.id, track]));
 
@@ -43,12 +60,91 @@ export function getUnreleasedTrack(id: string): UnreleasedTrack | undefined {
   return tracksById.get(id);
 }
 
-/** Both the track id and the pathname must match the catalog. */
-export function unreleasedUploadTarget(trackId: string | null | undefined, pathname: string): UnreleasedTrack | null {
+export function isOriginalUnreleasedId(id: string): boolean {
+  return tracksById.has(id);
+}
+
+/** Stable private pathname. Rejects traversal, suffixes, and mixed case. */
+export function unreleasedPathname(id: string): string | null {
+  if (!TRACK_ID.test(id) || id.length > MAX_TRACK_ID_LENGTH) return null;
+  return `unreleased/${id}.mp3`;
+}
+
+export function isUnreleasedPathname(pathname: string): boolean {
+  const match = /^unreleased\/([a-z0-9]+(?:-[a-z0-9]+)*)\.mp3$/.exec(pathname);
+  if (!match?.[1]) return false;
+  return unreleasedPathname(match[1]) === pathname;
+}
+
+/**
+ * The signed upload may only target unreleased/{id}.mp3 for that same id.
+ * The route still requires a matching database row before it signs.
+ */
+export function unreleasedUploadTarget(
+  trackId: string | null | undefined,
+  pathname: string,
+): { id: string; pathname: string } | null {
   if (!trackId) return null;
-  const track = tracksById.get(trackId);
-  if (!track || track.pathname !== pathname) return null;
-  return track;
+  const expected = unreleasedPathname(trackId);
+  if (!expected || expected !== pathname) return null;
+  return { id: trackId, pathname: expected };
+}
+
+export function slugTrackTitle(title: string): string {
+  const slug = title
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32)
+    .replace(/-+$/g, "");
+  return slug || "track";
+}
+
+/** suffix is 6 hex chars from the server. Callers cannot choose the id. */
+export function buildTrackId(title: string, suffix: string): string | null {
+  if (!/^[a-f0-9]{6}$/.test(suffix)) return null;
+  const id = `${slugTrackTitle(title)}-${suffix}`;
+  return unreleasedPathname(id) ? id : null;
+}
+
+export function cleanTrackTitle(value: string): string | null {
+  if (/[\u0000-\u001f\u007f]/.test(value)) return null;
+  const title = value.replace(/\s+/g, " ").trim();
+  if (!title || title.length > MAX_TRACK_TITLE_LENGTH) return null;
+  return title;
+}
+
+/** Empty is allowed. Newlines stay; other control characters do not. */
+export function cleanTrackNote(value: string): string | null {
+  const note = value.replace(/\r\n/g, "\n").trim();
+  if (note.length > MAX_TRACK_NOTE_LENGTH) return null;
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(note)) return null;
+  return note;
+}
+
+export function cleanTrackDuration(value: string): string | null {
+  const duration = value.trim();
+  if (!duration) return "";
+  if (!DURATION.test(duration)) return null;
+  return duration;
+}
+
+/** m:ss, or h:mm:ss past an hour. Empty when the browser cannot read it. */
+export function formatTrackDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 1 || seconds > 3 * 60 * 60) return "";
+  const total = Math.round(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const remain = total % 60;
+  const ss = String(remain).padStart(2, "0");
+  if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${ss}`;
+  return `${minutes}:${ss}`;
+}
+
+export function maxUnreleasedLabel(): string {
+  return `${Math.round(MAX_UNRELEASED_BYTES / (1024 * 1024))} MB`;
 }
 
 /**

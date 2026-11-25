@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { adminGate } from "@/lib/admin";
 import { openPrivateAudio, privateAudioStatus, privateBlobConfigured } from "@/lib/private-audio";
 import { currentMember } from "@/lib/members";
+import { getPlayableUnreleasedTrack } from "@/lib/unreleased-store";
 import {
   buildAudioStreamHeaders,
-  getUnreleasedTrack,
   resolveByteRange,
   safeRangeHeader,
   streamAccessStatus,
@@ -33,22 +33,22 @@ type StreamContext = { params: Promise<{ trackId: string }> };
  * Supporter and VIP, or a signed-in ADMIN_EMAILS admin.
  * adminGate reads the allowlist from ADMIN_EMAILS on every call.
  */
-async function streamPermission(): Promise<200 | 401 | 403> {
+async function streamPermission(): Promise<{ status: 200 | 401 | 403; admin: boolean }> {
   const gate = await adminGate();
-  if (gate.ok) return streamAccessStatus(gate.member.tier, { admin: true });
+  if (gate.ok) return { status: streamAccessStatus(gate.member.tier, { admin: true }), admin: true };
   const member = await currentMember();
-  return streamAccessStatus(member?.tier);
+  return { status: streamAccessStatus(member?.tier), admin: false };
 }
 
 async function authorizedTrack(
   params: Promise<{ trackId: string }>,
 ): Promise<{ track: UnreleasedTrack } | NextResponse> {
   const access = await streamPermission();
-  if (access === 401) return denied(401, "Sign in required");
-  if (access === 403) return denied(403, "Supporter or VIP required");
+  if (access.status === 401) return denied(401, "Sign in required");
+  if (access.status === 403) return denied(403, "Supporter or VIP required");
 
   const { trackId } = await params;
-  const track = getUnreleasedTrack(trackId);
+  const track = await getPlayableUnreleasedTrack(trackId, { admin: access.admin });
   if (!track) return denied(404, "Not found");
   if (!privateBlobConfigured()) return denied(503, "This track is not available yet");
   return { track };

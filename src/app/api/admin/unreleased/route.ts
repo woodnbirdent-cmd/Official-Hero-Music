@@ -3,11 +3,11 @@ import { issueSignedToken } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { guardAdminMutation } from "@/lib/admin";
 import { privateBlobConfigured } from "@/lib/private-audio";
+import { findUnreleasedUpload } from "@/lib/unreleased-store";
 import {
   MAX_UNRELEASED_BYTES,
   UNRELEASED_CONTENT_TYPES,
   UNRELEASED_UPLOAD_TTL_MS,
-  unreleasedUploadTarget,
 } from "@/lib/unreleased-tracks";
 
 export const runtime = "nodejs";
@@ -17,8 +17,8 @@ const NO_STORE = { "Cache-Control": "private, no-store" };
 
 /**
  * Admin-only presigned upload into the private Blob store.
- * The browser sends the MP3 straight to Blob. This route only checks the allowlist
- * and signs a 10-minute write for one catalog pathname.
+ * The browser sends the MP3 straight to Blob. This route checks the allowlist
+ * and signs a 10-minute write only for a song that already exists in the catalog.
  */
 export async function POST(request: Request) {
   let body: HandleUploadPresignedBody;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         const gate = await guardAdminMutation();
         if (!gate.ok) throw new Error("Forbidden");
         if (!privateBlobConfigured()) throw new Error("Upload failed");
-        const track = unreleasedUploadTarget(clientPayload, pathname);
+        const track = await findUnreleasedUpload(typeof clientPayload === "string" ? clientPayload : null, pathname);
         if (!track) throw new Error("Upload failed");
 
         const validUntil = Date.now() + UNRELEASED_UPLOAD_TTL_MS;

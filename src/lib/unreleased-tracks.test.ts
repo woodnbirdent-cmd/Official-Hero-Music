@@ -9,11 +9,17 @@ import {
   UNRELEASED_TRACKS,
   UNRELEASED_UPLOAD_TTL_MS,
   buildAudioStreamHeaders,
+  buildTrackId,
+  cleanTrackDuration,
+  cleanTrackNote,
+  cleanTrackTitle,
+  formatTrackDuration,
   getUnreleasedTrack,
   resolveByteRange,
   safeRangeHeader,
   streamAccessStatus,
   streamDeniedHeaders,
+  unreleasedPathname,
   unreleasedUploadTarget,
 } from "./unreleased-tracks.ts";
 
@@ -34,8 +40,9 @@ test("catalog is the two unreleased #Hero tracks and no public URL", () => {
     assert.equal(track.pathname.includes("blob.vercel-storage.com"), false);
   }
   assert.equal(getUnreleasedTrack("../unreleased/listen.mp3"), undefined);
-  assert.equal(MAX_UNRELEASED_BYTES, 30 * 1024 * 1024);
+  assert.equal(MAX_UNRELEASED_BYTES, 80 * 1024 * 1024);
   assert.equal(UNRELEASED_UPLOAD_TTL_MS, 10 * 60 * 1000);
+  assert.equal(UNRELEASED_TRACKS.every((track) => track.note === ""), true);
 });
 
 test("stream access matches supporter and above, and an admin session at any tier", () => {
@@ -53,13 +60,49 @@ test("stream access matches supporter and above, and an admin session at any tie
   assert.equal(streamAccessStatus("free", { admin: true }), 200);
 });
 
-test("upload target is the catalog pathname only", () => {
+test("upload target is unreleased/{id}.mp3 for that same id", () => {
   const listen = UNRELEASED_TRACKS[0];
-  assert.equal(listen && unreleasedUploadTarget("listen", listen.pathname), listen);
+  assert.deepEqual(listen && unreleasedUploadTarget("listen", listen.pathname), {
+    id: "listen",
+    pathname: "unreleased/listen.mp3",
+  });
+  assert.equal(unreleasedPathname("listen"), "unreleased/listen.mp3");
+  assert.deepEqual(unreleasedUploadTarget("night-drive-ab12cd", "unreleased/night-drive-ab12cd.mp3"), {
+    id: "night-drive-ab12cd",
+    pathname: "unreleased/night-drive-ab12cd.mp3",
+  });
   assert.equal(unreleasedUploadTarget("listen", "unreleased/still-there.mp3"), null);
   assert.equal(unreleasedUploadTarget("still-there", "https://evil.example/listen.mp3"), null);
   assert.equal(unreleasedUploadTarget(null, "unreleased/listen.mp3"), null);
   assert.equal(unreleasedUploadTarget("listen", "unreleased/../secret.mp3"), null);
+  assert.equal(unreleasedUploadTarget("../secret", "unreleased/../secret.mp3"), null);
+  assert.equal(unreleasedUploadTarget("Listen", "unreleased/Listen.mp3"), null);
+  assert.equal(unreleasedPathname("listen.mp3"), null);
+  assert.equal(unreleasedPathname("a".repeat(49)), null);
+});
+
+test("new song ids are slugs plus a server suffix, and text stays bounded", () => {
+  assert.equal(buildTrackId("Still There", "ab12cd"), "still-there-ab12cd");
+  assert.equal(buildTrackId("Café Night", "00ff10"), "cafe-night-00ff10");
+  assert.equal(buildTrackId("!!!", "abc123"), "track-abc123");
+  assert.equal(buildTrackId("Listen", "zzzzzz"), null);
+  assert.equal(buildTrackId("Listen", "abc12"), null);
+  assert.equal(cleanTrackTitle("  Night Drive  "), "Night Drive");
+  assert.equal(cleanTrackTitle(""), null);
+  assert.equal(cleanTrackTitle("x".repeat(81)), null);
+  assert.equal(cleanTrackTitle("bad\nname"), null);
+  assert.equal(cleanTrackNote(""), "");
+  assert.equal(cleanTrackNote("  a note  "), "a note");
+  assert.equal(cleanTrackNote("x".repeat(241)), null);
+  assert.equal(cleanTrackDuration(""), "");
+  assert.equal(cleanTrackDuration("3:00"), "3:00");
+  assert.equal(cleanTrackDuration("1:02:03"), "1:02:03");
+  assert.equal(cleanTrackDuration("3:60"), null);
+  assert.equal(cleanTrackDuration("nope"), null);
+  assert.equal(formatTrackDuration(125), "2:05");
+  assert.equal(formatTrackDuration(3600), "1:00:00");
+  assert.equal(formatTrackDuration(0), "");
+  assert.equal(formatTrackDuration(Number.NaN), "");
 });
 
 test("range headers stay a single byte range", () => {
@@ -139,8 +182,12 @@ test("playback and upload stay on private routes", () => {
   const player = readFileSync(join(root, "src/components/membership/UnreleasedTrackCard.tsx"), "utf8");
   const upload = readFileSync(join(root, "src/app/api/admin/unreleased/route.ts"), "utf8");
   const form = readFileSync(join(root, "src/components/admin/UnreleasedUploadForm.tsx"), "utf8");
+  const addForm = readFileSync(join(root, "src/components/admin/AddUnreleasedForm.tsx"), "utf8");
+  const uploader = readFileSync(join(root, "src/components/admin/upload-unreleased.ts"), "utf8");
   const page = readFileSync(join(root, "src/app/members/early-access/page.tsx"), "utf8");
   const adminPage = readFileSync(join(root, "src/app/admin/(panel)/unreleased/page.tsx"), "utf8");
+  const store = readFileSync(join(root, "src/lib/unreleased-store.ts"), "utf8");
+  const actions = readFileSync(join(root, "src/app/admin/unreleased/actions.ts"), "utf8");
   const middleware = readFileSync(join(root, "src/middleware.ts"), "utf8");
   const membersLayout = readFileSync(join(root, "src/app/members/layout.tsx"), "utf8");
   const rootLayout = readFileSync(join(root, "src/app/layout.tsx"), "utf8");
@@ -149,6 +196,7 @@ test("playback and upload stay on private routes", () => {
   assert.match(stream, /adminGate/);
   assert.match(stream, /currentMember/);
   assert.match(stream, /streamAccessStatus/);
+  assert.match(stream, /getPlayableUnreleasedTrack/);
   assert.match(stream, /buildAudioStreamHeaders/);
   assert.match(stream, /streamDeniedHeaders/);
   assert.match(stream, /export async function HEAD/);
@@ -160,28 +208,60 @@ test("playback and upload stay on private routes", () => {
   assert.equal(stream.includes("presignUrl"), false);
   assert.match(audio, /access: "private"/);
   assert.match(audio, /useCache: false/);
+  assert.match(audio, /isUnreleasedPathname/);
+  assert.match(audio, /BlobNotFoundError/);
+  assert.match(audio, /del\(pathname\)/);
   assert.equal(audio.includes("downloadUrl"), false);
 
   assert.match(player, /controlsList="nodownload"/);
   assert.match(player, /Unreleased/);
   assert.match(player, /\/api\/stream\//);
   assert.equal(player.includes("download="), false);
+  assert.equal(player.includes("pathname"), false);
   assert.equal(player.includes("blob.vercel-storage.com"), false);
 
   assert.match(page, /requireTier\("free"/);
   assert.match(page, /tierAtLeast\(member\.tier, "supporter"\)/);
+  assert.match(page, /listMemberUnreleasedTracks/);
   assert.match(page, /href="\/join"/);
+  assert.equal(page.includes("pathname="), false);
 
   assert.match(upload, /guardAdminMutation/);
+  assert.match(upload, /findUnreleasedUpload/);
+  assert.match(upload, /if \(multipart\) throw new Error\("Upload failed"\)/);
   assert.match(upload, /access is private|operations: \["put"\]/);
   assert.match(upload, /addRandomSuffix: false/);
   assert.match(upload, /allowOverwrite: true/);
-  assert.match(form, /access: "private"/);
+  assert.match(uploader, /access: "private"/);
+  assert.match(uploader, /multipart: false/);
+  assert.match(uploader, /handleUploadUrl: "\/api\/admin\/unreleased"/);
+  assert.equal(uploader.includes("downloadUrl"), false);
+  assert.equal(uploader.includes("access: \"public\""), false);
+  assert.match(form, /uploadUnreleasedMp3/);
   assert.match(form, /controlsList="nodownload"/);
   assert.match(form, /\/api\/stream\//);
   assert.equal(form.includes("download="), false);
   assert.equal(form.includes("downloadUrl"), false);
+  assert.equal(form.includes("access: \"public\""), false);
+  assert.match(addForm, /uploadUnreleasedMp3/);
+  assert.equal(addForm.includes("access: \"public\""), false);
+  assert.equal(addForm.includes("downloadUrl"), false);
   assert.match(adminPage, /requireAdmin/);
+  assert.match(actions, /guardAdminMutation/);
+  assert.match(actions, /deletePrivateAudio/);
+  assert.match(actions, /confirm !== existing\.title/);
+
+  assert.match(store, /CREATE TABLE IF NOT EXISTS unreleased_tracks/);
+  assert.match(store, /CREATE TABLE IF NOT EXISTS unreleased_seed/);
+  assert.match(store, /ON CONFLICT \(name\) DO NOTHING/);
+  assert.match(store, /ON CONFLICT \(id\) DO NOTHING/);
+  assert.match(store, /DELETE FROM unreleased_tracks WHERE id = \$1/);
+  assert.match(store, /hidden = false/);
+  assert.equal(store.includes("DROP "), false);
+  assert.equal(store.includes("TRUNCATE"), false);
+  assert.equal(store.includes("ALTER TABLE"), false);
+  assert.equal(store.includes("DELETE FROM \""), false);
+  assert.equal(store.includes("blob.vercel-storage.com"), false);
 
   assert.match(middleware, /pathname !== "\/admin" && !pathname.startsWith\("\/admin\/"\)/);
   assert.equal(middleware.includes("media-src"), false);

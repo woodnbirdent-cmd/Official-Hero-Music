@@ -4,7 +4,7 @@ import UnreleasedTrackCard from "@/components/membership/UnreleasedTrackCard";
 import { privateAudioStatus } from "@/lib/private-audio";
 import { requireTier } from "@/lib/members";
 import { tierAtLeast } from "@/lib/tiers";
-import { UNRELEASED_TRACKS } from "@/lib/unreleased-tracks";
+import { listMemberUnreleasedTracks } from "@/lib/unreleased-store";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +16,11 @@ export const metadata: Metadata = {
 export default async function EarlyAccessPage() {
   const member = await requireTier("free", "/members/early-access");
   const canStream = tierAtLeast(member.tier, "supporter");
+  const tracks = await listMemberUnreleasedTracks();
   const readyById = new Map<string, boolean>();
   if (canStream) {
     const statuses = await Promise.all(
-      UNRELEASED_TRACKS.map(async (track) => [track.id, (await privateAudioStatus(track.pathname)).ready] as const),
+      tracks.map(async (track) => [track.id, (await privateAudioStatus(track.pathname)).ready] as const),
     );
     for (const [id, ready] of statuses) readyById.set(id, ready);
   }
@@ -27,9 +28,7 @@ export default async function EarlyAccessPage() {
   return (
     <>
       <h1 className="graffiti-heading mb-4">Early access</h1>
-      <p className="mb-8 text-hero-light">
-        Unreleased songs for Supporter and VIP. Playback stays on this site.
-      </p>
+      <p className="mb-8 text-hero-light">Unreleased songs for Supporter and VIP. Playback stays on this site.</p>
       {canStream ? null : (
         <div className="card-surface mb-6">
           <p className="text-hero-light">Free members can see the list. Streaming starts at Supporter.</p>
@@ -38,11 +37,18 @@ export default async function EarlyAccessPage() {
           </Link>
         </div>
       )}
+      {tracks.length === 0 ? <p className="text-hero-muted">No unreleased songs right now.</p> : null}
       <ul className="space-y-4">
-        {UNRELEASED_TRACKS.map((track) => (
+        {tracks.map((track) => (
           <UnreleasedTrackCard
             key={track.id}
-            track={track}
+            track={{
+              id: track.id,
+              title: track.title,
+              artist: track.artist,
+              duration: track.duration,
+              note: track.note,
+            }}
             canStream={canStream}
             ready={readyById.get(track.id) === true}
           />

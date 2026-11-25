@@ -1,15 +1,10 @@
 "use client";
 
-import { uploadPresigned } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-function isMp3(file: File, maxBytes: number): boolean {
-  if (!file.name.toLowerCase().endsWith(".mp3")) return false;
-  if (file.type && file.type !== "audio/mpeg" && file.type !== "audio/mp3") return false;
-  if (file.size <= 0 || file.size > maxBytes) return false;
-  return true;
-}
+import { isMp3File } from "@/components/admin/mp3-file";
+import { uploadUnreleasedMp3 } from "@/components/admin/upload-unreleased";
+import { maxUnreleasedLabel } from "@/lib/unreleased-tracks";
 
 export default function UnreleasedUploadForm({
   trackId,
@@ -32,6 +27,7 @@ export default function UnreleasedUploadForm({
   const [pending, setPending] = useState(false);
   const [progress, setProgress] = useState(0);
   const inputId = `unreleased-${trackId}`;
+  const limit = maxUnreleasedLabel();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,40 +36,27 @@ export default function UnreleasedUploadForm({
     setError("");
     setMessage("");
     setProgress(0);
-    if (!(file instanceof File) || !isMp3(file, maxBytes)) {
-      setError("Choose an MP3 under 30 MB.");
+    if (!(file instanceof File) || !isMp3File(file, maxBytes)) {
+      setError(`Choose an MP3 under ${limit}.`);
       return;
     }
     setPending(true);
     try {
-      await uploadPresigned(pathname, file, {
-        access: "private",
-        handleUploadUrl: "/api/admin/unreleased",
-        clientPayload: trackId,
-        contentType: "audio/mpeg",
-        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
-      });
+      await uploadUnreleasedMp3(trackId, pathname, file, setProgress);
       form.reset();
       setMessage("Uploaded. Supporter and VIP members can stream it.");
       router.refresh();
     } catch {
-      setError("Upload failed. Use an MP3 under 30 MB, and confirm the private Blob store is connected.");
+      setError(`Upload failed. Use an MP3 under ${limit}, and confirm the private Blob store is connected.`);
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="card-surface space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-black uppercase tracking-tight text-white">{title}</h2>
-          <p className="mt-1 text-xs text-hero-muted">{pathname}</p>
-        </div>
-        <p className="text-sm text-hero-light">{stored ? `Stored · ${stored}` : "Not uploaded"}</p>
-      </div>
+    <form onSubmit={onSubmit} className="space-y-4">
       <label className="block" htmlFor={inputId}>
-        <span className="section-label mb-2 block">MP3</span>
+        <span className="section-label mb-2 block">{stored ? "Replace MP3" : "MP3"}</span>
         <input
           id={inputId}
           name="file"
@@ -85,7 +68,7 @@ export default function UnreleasedUploadForm({
         />
       </label>
       <button type="submit" className="btn-primary" disabled={!enabled || pending}>
-        {pending ? `Uploading ${progress}%` : "Upload MP3"}
+        {pending ? `Uploading ${progress}%` : stored ? "Replace MP3" : "Upload MP3"}
       </button>
       {stored ? (
         <div className="space-y-2">

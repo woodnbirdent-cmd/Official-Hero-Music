@@ -1,7 +1,7 @@
 /**
  * Member-only posts. Add an object to the list for that section.
  * Updates: any signed-in member. Downloads: VIP.
- * Unreleased audio is src/lib/unreleased-tracks.ts and is not listed here.
+ * Unreleased songs are managed at /admin/unreleased and are not listed here.
  */
 export type MemberItem = {
   id: string;
