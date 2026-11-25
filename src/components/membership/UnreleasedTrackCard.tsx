@@ -1,11 +1,9 @@
-import type { UnreleasedTrack } from "@/lib/unreleased-tracks";
-
 export default function UnreleasedTrackCard({
   track,
   canStream,
   ready,
 }: {
-  track: UnreleasedTrack;
+  track: { id: string; title: string; artist: string; duration: string; note: string };
   canStream: boolean;
   ready: boolean;
 }) {
@@ -19,8 +17,9 @@ export default function UnreleasedTrackCard({
       </div>
       <p className="mt-2 text-sm text-hero-light">
         {track.artist}
-        <span className="text-hero-muted"> · {track.duration}</span>
+        {track.duration ? <span className="text-hero-muted"> · {track.duration}</span> : null}
       </p>
+      {track.note ? <p className="mt-2 whitespace-pre-wrap break-words text-sm text-hero-muted">{track.note}</p> : null}
       {canStream ? (
         <>
           {ready ? null : <p className="mt-4 text-sm text-hero-muted">Audio file not uploaded yet.</p>}

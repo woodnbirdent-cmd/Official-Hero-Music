@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import AddUnreleasedForm from "@/components/admin/AddUnreleasedForm";
 import BroadcastPanel from "@/components/admin/BroadcastPanel";
-import UnreleasedUploadForm from "@/components/admin/UnreleasedUploadForm";
+import UnreleasedTrackAdmin from "@/components/admin/UnreleasedTrackAdmin";
 import { requireAdmin } from "@/lib/admin";
 import { formatDay } from "@/lib/admin-csv";
+import { getPool } from "@/lib/auth";
 import { privateAudioStatus, privateBlobConfigured } from "@/lib/private-audio";
-import { MAX_UNRELEASED_BYTES, UNRELEASED_TRACKS } from "@/lib/unreleased-tracks";
+import { listAdminUnreleasedTracks } from "@/lib/unreleased-store";
+import { MAX_UNRELEASED_BYTES, isOriginalUnreleasedId, maxUnreleasedLabel } from "@/lib/unreleased-tracks";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -29,14 +32,26 @@ function storedLabel(size: number | null, uploadedAt: string | null): string | n
 export default async function AdminUnreleasedPage() {
   await requireAdmin();
   const configured = privateBlobConfigured();
-  const statuses = await Promise.all(UNRELEASED_TRACKS.map((track) => privateAudioStatus(track.pathname)));
+  const databaseReady = Boolean(getPool());
+  let loadError = "";
+  const tracks = databaseReady
+    ? await listAdminUnreleasedTracks().catch((error: unknown) => {
+        console.error("Unreleased catalog lookup failed");
+        loadError = error instanceof Error ? "The song list could not be loaded." : "The song list could not be loaded.";
+        return [];
+      })
+    : [];
+  const statuses = await Promise.all(tracks.map((track) => privateAudioStatus(track.pathname)));
+  const limit = maxUnreleasedLabel();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="section-heading text-3xl">Unreleased</h1>
         <p className="mt-2 text-sm text-hero-muted">
-          Upload the MP3 for each track into private Blob. Files stay out of the repo. Preview a stored track here, or stream it from Early access as a Supporter or VIP. There is no public URL and no download button.
+          Add a song, replace its MP3, hide it, or remove it. Supporter and VIP members see visible songs on Early
+          access right away. Playback stays on this site. There is no public URL and no download button. MP3s can be up
+          to {limit}.
         </p>
       </div>
       {configured ? null : (
@@ -58,21 +73,39 @@ export default async function AdminUnreleasedPage() {
             <li>Connect the store to this project for Preview and Production.</li>
           </ol>
           <p className="text-hero-muted">
-            Connecting the store adds BLOB_READ_WRITE_TOKEN. On Vercel, a private store can also use BLOB_STORE_ID with OIDC. Then come back here and upload each MP3.
+            Connecting the store adds BLOB_READ_WRITE_TOKEN. On Vercel, a private store can also use BLOB_STORE_ID with
+            OIDC. Then come back here and upload each MP3.
           </p>
         </div>
       )}
-      {UNRELEASED_TRACKS.map((track, index) => {
+      {databaseReady ? null : (
+        <p className="card-surface text-sm text-hero-light">Database is not configured, so songs cannot be added.</p>
+      )}
+      {loadError ? <p className="card-surface text-sm text-hero-accent">{loadError}</p> : null}
+      {databaseReady && !loadError ? <AddUnreleasedForm enabled={configured} maxBytes={MAX_UNRELEASED_BYTES} /> : null}
+      {databaseReady && !loadError && tracks.length === 0 ? (
+        <p className="text-sm text-hero-muted">No songs yet.</p>
+      ) : null}
+      {tracks.map((track, index) => {
         const status = statuses[index];
         return (
-          <UnreleasedUploadForm
+          <UnreleasedTrackAdmin
             key={track.id}
-            trackId={track.id}
-            pathname={track.pathname}
-            title={`${track.title} · ${track.duration}`}
-            stored={status?.ready ? storedLabel(status.size, status.uploadedAt) : null}
-            enabled={configured}
-            maxBytes={MAX_UNRELEASED_BYTES}
+            track={{
+              id: track.id,
+              title: track.title,
+              artist: track.artist,
+              duration: track.duration,
+              note: track.note,
+              pathname: track.pathname,
+              hidden: track.hidden,
+              stored: status?.ready ? storedLabel(status.size, status.uploadedAt) : null,
+              original: isOriginalUnreleasedId(track.id),
+              first: index === 0,
+              last: index === tracks.length - 1,
+              enabled: configured,
+              maxBytes: MAX_UNRELEASED_BYTES,
+            }}
           />
         );
       })}
